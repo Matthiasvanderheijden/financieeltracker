@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="nl" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GeldStroom V9 - Cloud Editie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'media', 
+            theme: { extend: { colors: { brand: { purple: '#6b21a8', light: '#f3e8ff', yellow: '#facc15', dark: '#854d0e' } } } }
+        }
+    </script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+        .nav-btn.active { color: #6b21a8; border-top: 3px solid #6b21a8; font-weight: 800; }
+        @media (prefers-color-scheme: dark) { .nav-btn.active { color: #facc15; border-top: 3px solid #facc15; } }
+        body { -webkit-tap-highlight-color: transparent; }
+        input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .trend-scroll::-webkit-scrollbar { height: 6px; }
+        .trend-scroll::-webkit-scrollbar-track { background: transparent; }
+        .trend-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .trend-scroll::-webkit-scrollbar-thumb { background: #475569; }
+        
+        /* Login Overlay */
+        #login-overlay { display: flex; }
+        .hidden-login { display: none !important; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 pb-24 transition-colors duration-200">
+
+    <div id="login-overlay" class="fixed inset-0 bg-brand-purple dark:bg-slate-900 z-[100] flex-col justify-center items-center p-6 text-white transition-opacity duration-300">
+        <div class="w-full max-w-sm bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-2xl text-slate-800 dark:text-white">
+            <h1 class="text-3xl font-black italic tracking-widest text-brand-purple dark:text-brand-yellow mb-2 text-center">GELDSTROOM</h1>
+            <p class="text-xs text-center text-slate-400 mb-8 uppercase tracking-widest">Cloud Editie</p>
+            
+            <input type="email" id="login-email" placeholder="E-mailadres" class="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-xl mb-4 outline-none border border-slate-200 dark:border-slate-700">
+            <input type="password" id="login-pass" placeholder="Wachtwoord" class="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-xl mb-2 outline-none border border-slate-200 dark:border-slate-700">
+            <p id="login-error" class="text-red-500 text-xs font-bold h-4 mb-4 text-center"></p>
+            
+            <button onclick="login()" id="btn-login" class="w-full bg-brand-purple dark:bg-brand-yellow text-white dark:text-slate-900 p-4 rounded-xl font-black uppercase tracking-wider active:scale-95 transition-transform">Inloggen</button>
+            <p id="login-loading" class="text-center text-xs text-slate-400 mt-4 hidden">Verbinden met de cloud...</p>
+        </div>
+    </div>
+
+    <div id="main-app" class="hidden">
+        <nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t dark:border-slate-700 flex justify-between px-1 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+            <button onclick="switchTab('dash')" id="btn-dash" class="nav-btn active flex-1 py-3 text-slate-400 dark:text-slate-500 text-[9px] uppercase flex flex-col items-center gap-1 transition-all"><span class="text-lg">📊</span>Nu</button>
+            <button onclick="switchTab('input')" id="btn-input" class="nav-btn flex-1 py-3 text-slate-400 dark:text-slate-500 text-[9px] uppercase flex flex-col items-center gap-1 transition-all"><span class="text-lg">➕</span>Invoer</button>
+            <button onclick="switchTab('history')" id="btn-history" class="nav-btn flex-1 py-3 text-slate-400 dark:text-slate-500 text-[9px] uppercase flex flex-col items-center gap-1 transition-all"><span class="text-lg">📜</span>Lijst</button>
+            <button onclick="switchTab('analysis')" id="btn-analysis" class="nav-btn flex-1 py-3 text-slate-400 dark:text-slate-500 text-[9px] uppercase flex flex-col items-center gap-1 transition-all"><span class="text-lg">📈</span>Analyse</button>
+            <button onclick="switchTab('wealth')" id="btn-wealth" class="nav-btn flex-1 py-3 text-slate-400 dark:text-slate-500 text-[9px] uppercase flex flex-col items-center gap-1 transition-all"><span class="text-lg">💎</span>Vermogen</button>
+            <button onclick="switchTab('settings')" id="btn-settings" class="nav-btn flex-1 py-3 text-slate-400 dark:text-slate-500 text-[9px] uppercase flex flex-col items-center gap-1 transition-all"><span class="text-lg">⚙️</span>Instel</button>
+        </nav>
+
+        <section id="tab-dash" class="tab-content active p-5">
+            <header class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-black italic tracking-widest text-brand-purple dark:text-brand-yellow">GELDSTROOM</h1>
+                <div class="text-right">
+                    <p class="text-[9px] uppercase font-bold text-slate-400">Cyclus gestart (Loon M.)</p>
+                    <p id="dash-cycle-date" class="text-xs font-bold text-brand-purple dark:text-brand-light">Geen loon</p>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
+                    <p class="text-[10px] opacity-70 uppercase font-bold text-slate-500 dark:text-slate-400 mb-1">Bank Saldo</p>
+                    <p id="dash-bank" class="text-xl font-black text-slate-800 dark:text-white">€ 0.00</p>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
+                    <p class="text-[10px] opacity-70 uppercase font-bold text-slate-500 dark:text-slate-400 mb-1">Spaar Saldo</p>
+                    <p id="dash-save" class="text-xl font-black text-brand-purple dark:text-brand-yellow">€ 0.00</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 p-4 rounded-2xl shadow-sm mb-4 flex justify-between items-center text-white border border-slate-700">
+                <div>
+                    <p class="text-xs font-bold text-brand-yellow">🔥 FIRE Vermogen</p>
+                    <p class="text-[9px] text-slate-400 uppercase tracking-widest">Op weg naar 1 Miljoen</p>
+                </div>
+                <p id="dash-fire-amount" class="text-xl font-black text-white">€ 0.00</p>
+            </div>
+
+            <div class="bg-brand-purple dark:bg-brand-yellow p-6 rounded-3xl shadow-lg mb-4 text-white dark:text-slate-900 relative overflow-hidden">
+                <div class="relative z-10 flex justify-between items-end">
+                    <div>
+                        <p class="text-[10px] uppercase font-bold opacity-80 mb-1 tracking-wider">Safe-to-spend Vandaag</p>
+                        <p id="dash-daily" class="text-5xl font-black leading-none">€ 0</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] uppercase font-bold opacity-80 mb-1 tracking-wider">Deze Maand</p>
+                        <p id="dash-monthly-free" class="text-xl font-bold">€ 0.00</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-brand-light dark:bg-slate-800 p-4 rounded-2xl shadow-sm mb-6 flex justify-between items-center border border-brand-purple/20 dark:border-slate-700">
+                <div>
+                    <p class="text-xs font-bold text-brand-purple dark:text-brand-yellow">Sinking Fund Buffer</p>
+                    <p id="dash-sf-text" class="text-[10px] text-slate-600 dark:text-slate-400">Doel: €100 / mnd naar Spaar</p>
+                </div>
+                <button onclick="triggerSinkingFund()" class="bg-brand-purple dark:bg-brand-yellow text-white dark:text-slate-900 text-xs px-4 py-2 rounded-xl font-bold active:scale-95">Stort Nu</button>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
+                <h3 class="font-bold text-[10px] text-slate-400 uppercase tracking-wider mb-4">Checklist Vaste Lasten (Huidige Cyclus)</h3>
+                <div id="dash-fixed-checklist" class="space-y-2"></div>
+            </div>
+        </section>
+
+        <section id="tab-input" class="tab-content p-5">
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
+                <input type="number" id="inp-amt" placeholder="0.00" class="w-full text-5xl font-black text-center mb-4 bg-transparent outline-none text-slate-800 dark:text-white placeholder-slate-300 dark:placeholder-slate-600" step="0.01">
+                <input type="text" id="inp-note" placeholder="Notitie (optioneel)" class="w-full p-3 bg-slate-50 dark:bg-slate-900 rounded-xl mb-3 outline-none border border-slate-100 dark:border-slate-700 text-sm dark:text-white">
+                <input type="date" id="inp-date" class="w-full p-3 bg-slate-50 dark:bg-slate-900 rounded-xl mb-6 outline-none border border-slate-100 dark:border-slate-700 text-sm dark:text-white">
+                
+                <p class="text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-wider">Variabele Uitgaven</p>
+                <div id="grid-var" class="grid grid-cols-4 gap-2 mb-6"></div>
+
+                <p class="text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-wider">Vaste Lasten</p>
+                <div id="grid-fixed" class="grid grid-cols-4 gap-2 mb-6"></div>
+
+                <p class="text-[10px] font-bold text-brand-purple dark:text-brand-yellow uppercase mb-3 tracking-wider">Inkomsten</p>
+                <div id="grid-inc" class="grid grid-cols-4 gap-2"></div>
+            </div>
+        </section>
+
+        <section id="tab-history" class="tab-content p-5">
+            <div class="bg-brand-purple dark:bg-slate-800 p-5 rounded-3xl shadow-lg mb-6 text-white border border-brand-purple/20 dark:border-slate-700">
+                <h3 class="font-bold text-[10px] text-brand-light dark:text-brand-yellow uppercase tracking-wider mb-2">Afletteren (Reconciliatie)</h3>
+                <p class="text-xs opacity-80 mb-4">Verschilt de app van je echte bank app? Vul hier je echte saldo in om het gelijk te trekken.</p>
+                <div class="flex gap-2">
+                    <input type="number" id="recon-bank" placeholder="Echt Saldo..." class="flex-1 p-3 rounded-xl bg-white/20 dark:bg-slate-900 outline-none placeholder-white/50 dark:placeholder-slate-500 text-sm font-bold">
+                    <button onclick="reconcileBank()" class="bg-brand-yellow text-slate-900 px-4 rounded-xl font-bold text-xs uppercase tracking-wider">Check</button>
+                </div>
+            </div>
+
+            <h2 class="text-xl font-black mb-4 dark:text-white">Transacties <span id="cloud-status" class="text-[10px] text-green-500 ml-2 font-normal">🟢 Live</span></h2>
+            <div id="history-list" class="space-y-2"></div>
+        </section>
+
+        <section id="tab-analysis" class="tab-content p-5">
+            <h2 class="text-2xl font-black mb-6 dark:text-white">Analyse & Trends</h2>
+            <div class="flex gap-2 mb-6">
+                <select id="ana-month" onchange="renderAnalysis()" class="flex-1 p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 font-bold dark:text-white outline-none"></select>
+                <select id="ana-year" onchange="renderAnalysis()" class="flex-1 p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 font-bold dark:text-white outline-none"></select>
+            </div>
+
+            <div class="bg-slate-800 p-5 rounded-3xl shadow-lg mb-6 text-white border border-slate-700">
+                <h3 class="font-bold text-[10px] text-brand-yellow uppercase tracking-wider mb-4">Macro Overzicht</h3>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div><p class="text-[10px] text-slate-400 uppercase">Totaal Binnen</p><p id="ana-tot-in" class="text-xl font-bold text-green-400">€ 0.00</p></div>
+                    <div><p class="text-[10px] text-slate-400 uppercase">Totaal Buiten</p><p id="ana-tot-out" class="text-xl font-bold text-red-400">€ 0.00</p></div>
+                </div>
+                <div class="border-t border-slate-700 pt-4 flex justify-between items-center">
+                    <div><p class="text-[10px] text-slate-400 uppercase">Echte Overschot</p><p id="ana-surplus" class="text-lg font-bold">€ 0.00</p></div>
+                    <div class="text-right"><p class="text-[10px] text-brand-light uppercase">Actief Gespaard</p><p id="ana-savings-rate" class="text-2xl font-black text-brand-yellow">0%</p></div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm mb-6 border border-slate-100 dark:border-slate-700">
+                <h3 class="font-bold text-[10px] text-slate-400 uppercase tracking-wider mb-3">Variabele Categorieën</h3>
+                <div id="ana-breakdown" class="space-y-3"></div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
+                <h3 class="font-bold text-[10px] text-slate-400 uppercase tracking-wider mb-4">Jaar Trendgrafiek <span id="ana-trend-year" class="text-brand-purple dark:text-brand-yellow"></span></h3>
+                <p class="text-[9px] text-slate-400 mb-4 text-center">Groen = Inkomsten | Paars = Uitgaven</p>
+                <div class="w-full overflow-x-auto trend-scroll pb-2"><div id="ana-trend-chart" class="flex items-end gap-2 h-40 min-w-max px-2"></div></div>
+            </div>
+        </section>
+
+        <section id="tab-wealth" class="tab-content p-5">
+            <h2 class="text-2xl font-black mb-6 dark:text-white">Ons Vermogen</h2>
+            <div class="bg-slate-800 p-6 rounded-3xl shadow-lg mb-6 text-white relative overflow-hidden">
+                <p class="text-[10px] uppercase font-bold opacity-70 mb-1 tracking-wider text-brand-yellow">Totale Netto Waarde</p>
+                <p id="nw-total" class="text-4xl font-black mb-4">€ 0.00</p>
+                <div class="border-t border-slate-700 pt-4 flex justify-between items-end">
+                    <div><p class="text-[9px] uppercase font-bold opacity-70 mb-1 tracking-wider text-brand-light">FIRE Getal (Liquide)</p><p id="nw-liquid" class="text-xl font-bold">€ 0.00</p></div>
+                    <div class="text-right text-[10px] opacity-50">Zonder stenen/schuld</div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6 space-y-5">
+                <h3 class="font-bold text-[10px] text-slate-400 uppercase tracking-wider mb-2">Onze Doelen</h3>
+                <div><div class="flex justify-between text-xs font-bold mb-1 dark:text-slate-200"><span>🎯 Pensioen 2054 (1 Miljoen)</span><span id="goal-fire-pct">0%</span></div><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3"><div id="goal-fire-bar" class="bg-brand-purple dark:bg-brand-yellow h-3 rounded-full transition-all duration-500" style="width: 0%"></div></div></div>
+                <div><div class="flex justify-between text-xs font-bold mb-1 dark:text-slate-200"><span>🏠 Hypotheek Moretuslei</span><span id="goal-mor-pct">0%</span></div><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3"><div id="goal-mor-bar" class="bg-green-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div></div><p class="text-[9px] text-slate-400 mt-1 text-right" id="goal-mor-text">Nog te gaan...</p></div>
+                <div><div class="flex justify-between text-xs font-bold mb-1 dark:text-slate-200"><span>🏠 Hypotheek Sigarenstraat</span><span id="goal-sig-pct">0%</span></div><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3"><div id="goal-sig-bar" class="bg-green-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div></div><p class="text-[9px] text-slate-400 mt-1 text-right" id="goal-sig-text">Nog te gaan...</p></div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
+                <h3 class="font-bold text-[10px] text-brand-purple dark:text-brand-yellow uppercase tracking-wider mb-4">Waardes Updaten (Maandelijks)</h3>
+                <div class="mb-4">
+                    <label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Gezamenlijke Beleggingen</label>
+                    <input type="number" id="w-invest" class="w-full p-2 border-b bg-transparent outline-none dark:text-white dark:border-slate-600 mb-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="text-[10px] text-slate-500 font-bold uppercase">Pensioen M.</label><input type="number" id="w-pension-m" class="w-full p-2 border-b bg-transparent outline-none dark:text-white dark:border-slate-600"></div>
+                        <div><label class="text-[10px] text-slate-500 font-bold uppercase">Pensioen K.</label><input type="number" id="w-pension-k" class="w-full p-2 border-b bg-transparent outline-none dark:text-white dark:border-slate-600"></div>
+                        <div><label class="text-[10px] text-slate-500 font-bold uppercase">Groepsverz. M.</label><input type="number" id="w-group-m" class="w-full p-2 border-b bg-transparent outline-none dark:text-white dark:border-slate-600"></div>
+                        <div><label class="text-[10px] text-slate-500 font-bold uppercase">Groepsverz. K.</label><input type="number" id="w-group-k" class="w-full p-2 border-b bg-transparent outline-none dark:text-white dark:border-slate-600"></div>
+                    </div>
+                </div>
+                <div class="border-t dark:border-slate-700 pt-4 grid grid-cols-2 gap-3 mb-4">
+                    <div><label class="text-[10px] text-slate-500 font-bold uppercase">Waarde Moretuslei</label><input type="number" id="w-mor-val" class="w-full p-2 border-b bg-transparent outline-none dark:text-white dark:border-slate-600"></div>
+                    <div><label class="text-[10px] text-red-500 font-bold uppercase">Schuld Moretuslei</label><input type="number" id="w-mor-debt" class="w-full p-2 border-b bg-transparent outline-none text-red-600 dark:text-red-400 dark:border-slate-600"></div>
+                    <div><label class="text-[10px] text-slate-500 font-bold uppercase">Waarde Sigarenstr.</label><input type="number" id="w-sig-val" class="w-full p-2 border-b bg-transparent outline-none dark:text-white dark:border-slate-600"></div>
+                    <div><label class="text-[10px] text-red-500 font-bold uppercase">Schuld Sigarenstr.</label><input type="number" id="w-sig-debt" class="w-full p-2 border-b bg-transparent outline-none text-red-600 dark:text-red-400 dark:border-slate-600"></div>
+                </div>
+                <button onclick="updateWealthData()" class="w-full bg-brand-light dark:bg-slate-700 text-brand-purple dark:text-brand-yellow p-3 rounded-xl font-bold text-xs uppercase tracking-wider">Opslaan & Snapshot Maken</button>
+            </div>
+        </section>
+
+        <section id="tab-settings" class="tab-content p-5">
+            <h2 class="text-xl font-black mb-6 dark:text-white">Instellingen</h2>
+            
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm mb-6 border border-slate-100 dark:border-slate-700">
+                <h3 class="font-bold mb-3 text-xs uppercase text-brand-purple dark:text-brand-yellow">1. Startbedragen Hypotheken (Doelen)</h3>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div><label class="text-[10px] text-slate-500 uppercase font-bold">Moretuslei Start</label><input type="number" id="set-mor-start" class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none"></div>
+                    <div><label class="text-[10px] text-slate-500 uppercase font-bold">Sigarenstraat Start</label><input type="number" id="set-sig-start" class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none"></div>
+                </div>
+                <button onclick="saveWealthStarts()" class="w-full bg-slate-800 dark:bg-slate-700 text-white p-3 rounded-xl font-bold text-sm">Opslaan Startbedragen</button>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm mb-6 border border-slate-100 dark:border-slate-700">
+                <h3 class="font-bold mb-3 text-xs uppercase text-brand-purple dark:text-brand-yellow">2. Saldi & Buffer (Sinking Fund)</h3>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div class="col-span-2">
+                        <label class="text-[10px] text-slate-500 uppercase font-bold">Sinking Fund (Bedrag per maand)</label>
+                        <input type="number" id="set-sf-amount" class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none">
+                    </div>
+                    <div><label class="text-[10px] text-slate-500 uppercase font-bold">Bank Saldo</label><input type="number" id="set-bank" class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none"></div>
+                    <div><label class="text-[10px] text-slate-500 uppercase font-bold">Spaar Saldo</label><input type="number" id="set-save" class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none"></div>
+                </div>
+                <button onclick="saveInitBalances()" class="w-full bg-slate-800 dark:bg-slate-700 text-white p-3 rounded-xl font-bold text-sm">Opslaan Instellingen</button>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm mb-6 border border-slate-100 dark:border-slate-700">
+                <h3 class="font-bold mb-3 text-xs uppercase text-brand-purple dark:text-brand-yellow">3. Vaste Lasten Beheren</h3>
+                <div id="settings-fc-list" class="space-y-2 mb-4"></div>
+                <button onclick="addFC()" class="w-full bg-brand-light dark:bg-slate-700 text-brand-purple dark:text-brand-yellow p-3 rounded-xl font-bold text-xs uppercase tracking-wider">+ Voeg Vaste Kost Toe</button>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm mb-6 border border-slate-100 dark:border-slate-700">
+                <h3 class="font-bold mb-3 text-xs uppercase text-brand-purple dark:text-brand-yellow">4. Cloud Beheer & Backups</h3>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button onclick="exportJSON()" class="bg-brand-light dark:bg-slate-700 text-brand-purple dark:text-brand-yellow p-3 rounded-xl font-bold text-xs shadow-sm">Maak Lokale Backup</button>
+                    <button onclick="logout()" class="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-white p-3 rounded-xl font-bold text-xs shadow-sm">Uitloggen</button>
+                </div>
+                <button onclick="document.getElementById('file-import').click()" class="w-full mb-4 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-white p-3 rounded-xl font-bold text-xs shadow-sm">Upload Oude Data naar Cloud</button>
+                <input type="file" id="file-import" class="hidden" accept=".json" onchange="importJSON(event)">
+                
+                <button onclick="hardResetApp()" class="w-full bg-red-600 text-white p-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg active:scale-95">⚠️ Wis Account Data</button>
+            </div>
+        </section>
+    </div> <script>
+        // --- 1. FIREBASE SETUP ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBkazu-3wmAcjUkfIEtACJFhiuoKgmcxfk",
+            authDomain: "financieel-tracker.firebaseapp.com",
+            projectId: "financieel-tracker",
+            storageBucket: "financieel-tracker.firebasestorage.app",
+            messagingSenderId: "698843333762",
+            appId: "1:698843333762:web:ddeefb2f0d033a9aa1a09b"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        // --- 2. CONFIGURATIE & GLOBALE STATE ---
+        const VAR_CATS = [{ id: 'v1', name: 'Vervoer', icon: '🚗' }, { id: 'v2', name: 'Huis/Tuin', icon: '🏡' }, { id: 'v3', name: 'Boodschap', icon: '🛒' }, { id: 'v4', name: 'Verzorging', icon: '✂️' }, { id: 'v5', name: 'Horeca', icon: '🍻' }, { id: 'v6', name: 'Uitstap', icon: '🎢' }, { id: 'v9', name: 'Medisch', icon: '💊' }, { id: 'v10', name: 'Kleding', icon: '👕' }, { id: 'v11', name: 'Creche', icon: '🎒' }, { id: 'v7', name: 'Sparen', icon: '📥' }, { id: 'v8', name: 'Diversen', icon: '📦' }];
+        const INC_CATS = [{ id: 'i1', name: 'Loon M.', icon: '👨‍💼' }, { id: 'i2', name: 'Loon K.', icon: '👩‍💼' }, { id: 'i3', name: 'Kindergeld', icon: '👶' }, { id: 'i4', name: 'Andere', icon: '🎁' }];
+        const DEFAULT_FIXED = [{ id: 'f1', name: 'Gas/Elek', amount: 130, icon: '⚡' }, { id: 'f2', name: 'Orange', amount: 64, icon: '📱' }, { id: 'f3', name: 'Garage', amount: 75, icon: '🅿️' }, { id: 'f4', name: 'Rekening', amount: 4.5, icon: '🏦' }, { id: 'f5', name: 'ABVV', amount: 20.75, icon: '🛡️' }, { id: 'f6', name: 'Basic-Fit', amount: 34.99, icon: '💪' }, { id: 'f7', name: 'DAZN', amount: 19.99, icon: '⚽' }, { id: 'f8', name: 'Streamz', amount: 13.99, icon: '🎬' }, { id: 'f9', name: 'V. Borre', amount: 16.99, icon: '📺' }, { id: 'f10', name: 'Netflix', amount: 21.99, icon: '🍿' }, { id: 'f11', name: 'Hypotheek', amount: 853.13, icon: '🏠' }, { id: 'f12', name: 'AXA 1', amount: 46.89, icon: '📄' }, { id: 'f13', name: 'AXA 2', amount: 30.96, icon: '📄' }, { id: 'f14', name: 'Pensioen', amount: 87.5, icon: '👴' }];
+
+        // Lokaal object. Dit wordt constant overschreven door Firebase.
+        let state = {
+            balances: { bank: 0, save: 0 }, transactions: [], sinkingFundMonthly: 100, fixedCosts: DEFAULT_FIXED,
+            wealth: { invest: 1800, pension_m: 18000, pension_k: 0, group_m: 25000, group_k: 0, mor_start: 200000, mor_val: 300000, mor_debt: 200000, sig_start: 200000, sig_val: 400000, sig_debt: 200000, history: [] }
+        };
+        let currentUserUid = null;
+        let unsubscribe = null; // Voor de realtime verbinding
+
+        // --- 3. AUTHENTICATIE LOGICA ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Ingelogd!
+                currentUserUid = user.uid;
+                document.getElementById('login-overlay').classList.add('hidden-login');
+                document.getElementById('main-app').classList.remove('hidden');
+                document.getElementById('inp-date').valueAsDate = new Date();
+                
+                // Activeer de live Cloud connectie
+                startCloudSync();
+            } else {
+                // Uitgelogd
+                currentUserUid = null;
+                document.getElementById('main-app').classList.add('hidden');
+                document.getElementById('login-overlay').classList.remove('hidden-login');
+                if (unsubscribe) unsubscribe(); // Verbreek live verbinding
+            }
+        });
+
+        function login() {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            const errEl = document.getElementById('login-error');
+            const loadEl = document.getElementById('login-loading');
+            
+            if (!email || !pass) return errEl.innerText = "Vul alles in.";
+            errEl.innerText = "";
+            loadEl.classList.remove('hidden');
+            document.getElementById('btn-login').disabled = true;
+
+            auth.signInWithEmailAndPassword(email, pass).catch(error => {
+                errEl.innerText = "Fout e-mailadres of wachtwoord.";
+                loadEl.classList.add('hidden');
+                document.getElementById('btn-login').disabled = false;
+            });
+        }
+
+        function logout() { auth.signOut(); }
+
+        // --- 4. CLOUD SYNC LOGICA ---
+        function startCloudSync() {
+            const docRef = db.collection('accounts').doc(currentUserUid);
+            
+            // onSnapshot betekent: als de database verandert (bijv. op Kelly's gsm), verander dan direct deze app mee!
+            unsubscribe = docRef.onSnapshot((doc) => {
+                if (doc.exists) {
+                    // Data succesvol gedownload
+                    state = doc.data();
+                    
+                    // Failsafe check voor data integriteit
+                    if(!state.balances) state.balances = { bank: 0, save: 0 };
+                    if(!state.transactions) state.transactions = [];
+                    if(!state.sinkingFundMonthly) state.sinkingFundMonthly = 100;
+                    if(!state.fixedCosts) state.fixedCosts = DEFAULT_FIXED;
+                    if(!state.wealth) state.wealth = { invest: 0, pension_m: 0, pension_k: 0, group_m: 0, group_k: 0, mor_start: 200000, mor_val: 0, mor_debt: 0, sig_start: 200000, sig_val: 0, sig_debt: 0, history: [] };
+                    
+                    document.getElementById('cloud-status').innerText = "🟢 Live";
+                    updateUI(); // Bouw het scherm opnieuw op met de verse data
+                } else {
+                    // Eerste keer ingelogd: upload lokale localStorage data naar de cloud als die bestaat!
+                    let localData = localStorage.getItem('gs_v8_data');
+                    if (localData) {
+                        state = JSON.parse(localData);
+                        saveToCloud();
+                    } else {
+                        // Geen lokale data, bewaar standaard state
+                        saveToCloud();
+                    }
+                }
+            }, (error) => {
+                console.error("Cloud Sync Error: ", error);
+                document.getElementById('cloud-status').innerText = "🔴 Offline";
+                document.getElementById('cloud-status').classList.replace('text-green-500', 'text-red-500');
+            });
+        }
+
+        // De nieuwe SaveState die naar Firebase schrijft
+        function saveState() {
+            // Backup lokaal voor zekerheid
+            localStorage.setItem('gs_v8_data', JSON.stringify(state));
+            // Push direct naar de cloud
+            saveToCloud();
+            // User feedback
+            updateUI();
+        }
+
+        function saveToCloud() {
+            if (!currentUserUid) return;
+            document.getElementById('cloud-status').innerText = "⏳ Bezig...";
+            db.collection('accounts').doc(currentUserUid).set(state).then(() => {
+                document.getElementById('cloud-status').innerText = "🟢 Live";
+            }).catch(err => {
+                console.error("Cloud Save Error: ", err);
+                document.getElementById('cloud-status').innerText = "🔴 Fout";
+                alert("Let op: Kon niet opslaan in de cloud. Ben je offline?");
+            });
+        }
+
+        // --- 5. UI & TAB NAVIGATIE ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            document.getElementById('btn-' + tabId).classList.add('active');
+            if(tabId === 'analysis') fillAnalysisSelectors();
+            if(tabId === 'wealth') fillWealthInputs();
+            if(tabId === 'settings') {
+                document.getElementById('set-sf-amount').value = state.sinkingFundMonthly;
+                document.getElementById('set-bank').value = state.balances.bank.toFixed(2);
+                document.getElementById('set-save').value = state.balances.save.toFixed(2);
+                document.getElementById('set-mor-start').value = state.wealth.mor_start;
+                document.getElementById('set-sig-start').value = state.wealth.sig_start;
+                renderSettingsFixed();
+            }
+        }
+
+        // --- 6. CORE LOGICA (Gelijk aan V8.5) ---
+        function addTransaction(catId, type, nameOverride) {
+            const amt = parseFloat(document.getElementById('inp-amt').value); const date = document.getElementById('inp-date').value; const note = document.getElementById('inp-note').value.trim();
+            if (!amt || !date) return alert('Vul een bedrag en datum in.');
+            const finalAmt = (type === 'income') ? amt : -Math.abs(amt);
+            if (catId === 'v7') { state.balances.bank += finalAmt; state.balances.save += Math.abs(amt); } else { state.balances.bank += finalAmt; }
+            state.transactions.push({ id: Date.now(), catId, type, amount: finalAmt, date, note: note || nameOverride });
+            document.getElementById('inp-amt').value = ''; document.getElementById('inp-note').value = '';
+            checkWealthSnapshot(); saveState(); switchTab('dash');
+        }
+
+        function triggerSinkingFund() {
+            if(confirm(`€${state.sinkingFundMonthly} overzetten?`)) {
+                state.balances.bank -= state.sinkingFundMonthly; state.balances.save += state.sinkingFundMonthly;
+                state.transactions.push({ id: Date.now(), catId: 'transfer_sf', type: 'transfer', amount: -state.sinkingFundMonthly, date: new Date().toISOString().split('T')[0], note: 'Sinking Fund Buffer' });
+                saveState();
+            }
+        }
+
+        function updateUI() {
+            let cycleStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1); 
+            const incomesM = state.transactions.filter(t => t.catId === 'i1').sort((a,b) => new Date(b.date) - new Date(a.date));
+            if (incomesM.length > 0) cycleStart = new Date(incomesM[0].date);
+            document.getElementById('dash-cycle-date').innerText = cycleStart.toLocaleDateString('nl-BE');
+
+            const tInCycle = state.transactions.filter(t => new Date(t.date) >= cycleStart);
+            const incomeInCycle = tInCycle.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+            const varSpentInCycle = Math.abs(tInCycle.filter(t => t.type === 'var').reduce((s, t) => s + t.amount, 0));
+            const totalFixedBudget = state.fixedCosts.reduce((s, c) => s + c.amount, 0);
+            const monthlyFree = incomeInCycle - totalFixedBudget - state.sinkingFundMonthly - varSpentInCycle;
+
+            const today = new Date(); const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            let daysRemaining = (lastDayOfMonth.getDate() - today.getDate()) + 1; if(daysRemaining < 1) daysRemaining = 1; 
+            let dailyBudget = monthlyFree / daysRemaining;
+
+            document.getElementById('dash-bank').innerText = `€ ${state.balances.bank.toFixed(2)}`;
+            document.getElementById('dash-save').innerText = `€ ${state.balances.save.toFixed(2)}`;
+            document.getElementById('dash-monthly-free').innerText = `€ ${monthlyFree.toFixed(2)}`;
+            document.getElementById('dash-daily').innerText = `€ ${dailyBudget > 0 ? Math.floor(dailyBudget) : 0}`;
+            document.getElementById('dash-sf-text').innerText = `Doel: €${state.sinkingFundMonthly} / mnd naar Spaar`;
+
+            const w = state.wealth; const b = state.balances;
+            const liquid = b.bank + b.save + (w.invest||0) + (w.pension_m||0) + (w.pension_k||0) + (w.group_m||0) + (w.group_k||0);
+            document.getElementById('dash-fire-amount').innerText = `€ ${liquid.toLocaleString('nl-BE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+            document.getElementById('dash-fixed-checklist').innerHTML = state.fixedCosts.map(c => {
+                const isPaid = tInCycle.some(t => t.catId === c.id);
+                return `<div class="flex justify-between items-center p-2 rounded-lg ${isPaid ? 'opacity-40 bg-slate-50 dark:bg-slate-900' : 'bg-white dark:bg-slate-800'}"><div class="flex items-center gap-2"><span class="text-lg">${isPaid ? '✅' : c.icon}</span><span class="text-xs font-bold ${isPaid ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-200'}">${c.name}</span></div><span class="text-[10px] font-bold ${isPaid ? 'text-slate-400' : 'text-brand-purple dark:text-brand-yellow'}">€ ${c.amount}</span></div>`;
+            }).join('');
+
+            renderHistory(); renderGrids(); renderWealthUI();
+        }
+
+        function renderGrids() {
+            document.getElementById('grid-var').innerHTML = VAR_CATS.map(c => `<button onclick="addTransaction('${c.id}', 'var', '${c.name}')" class="bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 p-2 rounded-2xl flex flex-col items-center justify-center text-[9px] font-bold shadow-sm active:scale-95 text-center"><span class="text-xl mb-1">${c.icon}</span>${c.name}</button>`).join('');
+            document.getElementById('grid-fixed').innerHTML = state.fixedCosts.map(c => `<button onclick="addTransaction('${c.id}', 'fixed', '${c.name}')" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 p-2 rounded-2xl flex flex-col items-center justify-center text-[9px] font-bold text-slate-500 dark:text-slate-300 shadow-sm active:scale-95 text-center"><span class="text-xl mb-1 opacity-70">${c.icon}</span><span class="truncate w-full">${c.name}</span></button>`).join('');
+            document.getElementById('grid-inc').innerHTML = INC_CATS.map(c => `<button onclick="addTransaction('${c.id}', 'income', '${c.name}')" class="bg-brand-light dark:bg-brand-yellow/20 border border-brand-purple/20 p-2 rounded-2xl flex flex-col items-center justify-center text-[9px] font-bold text-brand-purple dark:text-brand-yellow shadow-sm active:scale-95 text-center"><span class="text-xl mb-1">${c.icon}</span>${c.name}</button>`).join('');
+        }
+
+        function reconcileBank() {
+            const realBank = parseFloat(document.getElementById('recon-bank').value); if (isNaN(realBank)) return alert('Vul in.');
+            const diff = realBank - state.balances.bank; if (Math.abs(diff) < 0.01) { alert('Perfect!'); document.getElementById('recon-bank').value = ''; return; }
+            if (confirm(`Verschil ontdekt van €${diff.toFixed(2)}. Correctie maken?`)) {
+                state.balances.bank = realBank; state.transactions.push({ id: Date.now(), catId: 'correction', type: 'correction', amount: diff, date: new Date().toISOString().split('T')[0], note: 'Bank Correctie' });
+                document.getElementById('recon-bank').value = ''; saveState();
+            }
+        }
+
+        function renderHistory() {
+            const list = [...state.transactions].sort((a,b) => new Date(b.date) - new Date(a.date));
+            document.getElementById('history-list').innerHTML = list.map(t => {
+                let color = 'text-slate-800 dark:text-white'; if(t.type === 'income') color = 'text-green-600 dark:text-green-400'; if(t.type === 'correction') color = 'text-brand-yellow';
+                return `<div class="bg-white dark:bg-slate-800 p-3 rounded-2xl flex justify-between items-center text-sm shadow-sm border border-slate-50 dark:border-slate-700"><div><p class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">${t.note}</p><p class="text-[10px] text-slate-400">${t.date} | ${t.type.toUpperCase()}</p></div><div class="text-right"><p class="font-bold ${color}">${t.amount > 0 ? '+' : ''}€${t.amount.toFixed(2)}</p><button onclick="delTransaction(${t.id})" class="text-[9px] uppercase text-red-300 mt-1">Wis</button></div></div>`;
+            }).join('') || '<p class="text-sm text-slate-400">Nog geen transacties.</p>';
+        }
+
+        function delTransaction(id) {
+            if(!confirm('Transactie wissen?')) return;
+            const t = state.transactions.find(x => x.id === id);
+            if(t.catId === 'v7' || t.catId === 'transfer_sf') { state.balances.bank -= t.amount; state.balances.save -= Math.abs(t.amount); } else { state.balances.bank -= t.amount; }
+            state.transactions = state.transactions.filter(x => x.id !== id); saveState();
+        }
+
+        function fillAnalysisSelectors() {
+            const mSel = document.getElementById('ana-month'); const ySel = document.getElementById('ana-year');
+            if (mSel.options.length === 0) {
+                const months = ["Jan", "Feb", "Mrt", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"]; const now = new Date();
+                mSel.innerHTML = months.map((m, i) => `<option value="${i}" ${i === now.getMonth() ? 'selected' : ''}>${m}</option>`).join('');
+                ySel.innerHTML = [now.getFullYear()-1, now.getFullYear(), now.getFullYear()+1].map(y => `<option value="${y}" ${y === now.getFullYear() ? 'selected' : ''}>${y}</option>`).join(''); renderAnalysis();
+            }
+        }
+
+        function renderAnalysis() {
+            const m = parseInt(document.getElementById('ana-month').value); const y = parseInt(document.getElementById('ana-year').value);
+            const tMonthAll = state.transactions.filter(t => new Date(t.date).getMonth() === m && new Date(t.date).getFullYear() === y);
+            const totalIn = tMonthAll.filter(t => t.type === 'income').reduce((s,t) => s + t.amount, 0);
+            const totalOutFixed = Math.abs(tMonthAll.filter(t => t.type === 'fixed').reduce((s,t) => s + t.amount, 0));
+            const totalOutVar = Math.abs(tMonthAll.filter(t => t.type === 'var').reduce((s,t) => s + t.amount, 0));
+            const totalOut = totalOutFixed + totalOutVar; const surplus = totalIn - totalOut;
+
+            const activeSavings = Math.abs(tMonthAll.filter(t => t.catId === 'v7' || t.catId === 'transfer_sf').reduce((s,t) => s + t.amount, 0));
+            const trueSavingsRate = totalIn > 0 ? Math.round((activeSavings / totalIn) * 100) : 0;
+
+            document.getElementById('ana-tot-in').innerText = `€ ${totalIn.toFixed(2)}`; document.getElementById('ana-tot-out').innerText = `€ ${totalOut.toFixed(2)}`;
+            document.getElementById('ana-surplus').innerText = `€ ${surplus.toFixed(2)}`; document.getElementById('ana-surplus').className = `text-lg font-bold ${surplus >= 0 ? 'text-green-500' : 'text-red-500'}`;
+            document.getElementById('ana-savings-rate').innerText = `${trueSavingsRate}%`;
+
+            const breakdown = {}; VAR_CATS.forEach(c => breakdown[c.name] = { total: 0, icon: c.icon });
+            tMonthAll.filter(t => t.type === 'var').forEach(t => { if(breakdown[t.note]) breakdown[t.note].total += Math.abs(t.amount); });
+
+            document.getElementById('ana-breakdown').innerHTML = Object.values(breakdown).filter(c => c.total > 0).sort((a,b) => b.total - a.total).map(c => {
+                const pct = totalOutVar > 0 ? Math.round((c.total / totalOutVar) * 100) : 0;
+                return `<div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-50 dark:border-slate-700 shadow-sm"><div class="flex justify-between text-xs font-bold mb-1 dark:text-slate-200"><span>${c.icon} ${Object.keys(breakdown).find(k => breakdown[k] === c)}</span><span>€${c.total.toFixed(2)}</span></div><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2"><div class="bg-brand-purple dark:bg-brand-yellow h-2 rounded-full" style="width: ${pct}%"></div></div></div>`;
+            }).join('') || '<p class="text-sm text-slate-400">Geen variabele data.</p>';
+
+            document.getElementById('ana-trend-year').innerText = y; const chartContainer = document.getElementById('ana-trend-chart'); chartContainer.innerHTML = '';
+            const monthsNames = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]; let maxAmt = 1; 
+
+            const yearlyData = [];
+            for(let i=0; i<12; i++) {
+                const tm = state.transactions.filter(t => new Date(t.date).getMonth() === i && new Date(t.date).getFullYear() === y);
+                const mIn = tm.filter(t => t.type === 'income').reduce((s,t) => s + t.amount, 0); const mOut = Math.abs(tm.filter(t => t.type === 'var' || t.type === 'fixed').reduce((s,t) => s + t.amount, 0));
+                if(mIn > maxAmt) maxAmt = mIn; if(mOut > maxAmt) maxAmt = mOut; yearlyData.push({ mIn, mOut });
+            }
+            yearlyData.forEach((d, index) => {
+                chartContainer.innerHTML += `<div class="flex flex-col items-center justify-end h-full gap-1 w-8 flex-shrink-0"><div class="flex items-end gap-[2px] w-full h-full relative group"><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-800 text-white text-[8px] p-1 rounded z-10 whitespace-nowrap">In: €${Math.round(d.mIn)}<br>Uit: €${Math.round(d.mOut)}</div><div class="w-1/2 bg-green-400 rounded-t-sm" style="height: ${(d.mIn / maxAmt) * 100}%"></div><div class="w-1/2 bg-brand-purple dark:bg-brand-yellow rounded-t-sm" style="height: ${(d.mOut / maxAmt) * 100}%"></div></div><span class="text-[8px] font-bold text-slate-400">${monthsNames[index]}</span></div>`;
+            });
+        }
+
+        function renderWealthUI() {
+            const w = state.wealth; const b = state.balances;
+            const liquid = b.bank + b.save + (w.invest||0) + (w.pension_m||0) + (w.pension_k||0) + (w.group_m||0) + (w.group_k||0);
+            const totalNW = liquid + (w.mor_val||0) + (w.sig_val||0) - (w.mor_debt||0) - (w.sig_debt||0);
+
+            document.getElementById('nw-total').innerText = `€ ${totalNW.toLocaleString('nl-BE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`; document.getElementById('nw-liquid').innerText = `€ ${liquid.toLocaleString('nl-BE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            const fireGoal = 1000000; let firePct = (liquid / fireGoal) * 100; if(firePct > 100) firePct = 100;
+            document.getElementById('goal-fire-pct').innerText = `${firePct.toFixed(1)}%`; document.getElementById('goal-fire-bar').style.width = `${firePct}%`;
+
+            const morStart = w.mor_start > 0 ? w.mor_start : 1; const morPaid = morStart - (w.mor_debt||0); let morPct = (morPaid / morStart) * 100; if(morPct < 0) morPct = 0; if(morPct > 100) morPct = 100;
+            document.getElementById('goal-mor-pct').innerText = `${morPct.toFixed(1)}%`; document.getElementById('goal-mor-bar').style.width = `${morPct}%`; document.getElementById('goal-mor-text').innerText = `Nog € ${(w.mor_debt||0).toLocaleString('nl-BE')} te gaan`;
+
+            const sigStart = w.sig_start > 0 ? w.sig_start : 1; const sigPaid = sigStart - (w.sig_debt||0); let sigPct = (sigPaid / sigStart) * 100; if(sigPct < 0) sigPct = 0; if(sigPct > 100) sigPct = 100;
+            document.getElementById('goal-sig-pct').innerText = `${sigPct.toFixed(1)}%`; document.getElementById('goal-sig-bar').style.width = `${sigPct}%`; document.getElementById('goal-sig-text').innerText = `Nog € ${(w.sig_debt||0).toLocaleString('nl-BE')} te gaan`;
+        }
+
+        function fillWealthInputs() {
+            const w = state.wealth;
+            document.getElementById('w-invest').value = w.invest || 0; document.getElementById('w-pension-m').value = w.pension_m || 0; document.getElementById('w-pension-k').value = w.pension_k || 0; document.getElementById('w-group-m').value = w.group_m || 0; document.getElementById('w-group-k').value = w.group_k || 0;
+            document.getElementById('w-mor-val').value = w.mor_val || 0; document.getElementById('w-mor-debt').value = w.mor_debt || 0; document.getElementById('w-sig-val').value = w.sig_val || 0; document.getElementById('w-sig-debt').value = w.sig_debt || 0;
+        }
+
+        function updateWealthData() {
+            const w = state.wealth;
+            w.invest = parseFloat(document.getElementById('w-invest').value) || 0; w.pension_m = parseFloat(document.getElementById('w-pension-m').value) || 0; w.pension_k = parseFloat(document.getElementById('w-pension-k').value) || 0; w.group_m = parseFloat(document.getElementById('w-group-m').value) || 0; w.group_k = parseFloat(document.getElementById('w-group-k').value) || 0;
+            w.mor_val = parseFloat(document.getElementById('w-mor-val').value) || 0; w.mor_debt = parseFloat(document.getElementById('w-mor-debt').value) || 0; w.sig_val = parseFloat(document.getElementById('w-sig-val').value) || 0; w.sig_debt = parseFloat(document.getElementById('w-sig-debt').value) || 0;
+            forceWealthSnapshot(); saveState(); alert('Waardes opgeslagen en toegevoegd aan je historiek!');
+        }
+
+        function checkWealthSnapshot() { const now = new Date(); const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; if(!state.wealth.history.some(h => h.month === monthKey)) { takeSnapshot(monthKey); } }
+        function forceWealthSnapshot() { const now = new Date(); const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; state.wealth.history = state.wealth.history.filter(h => h.month !== monthKey); takeSnapshot(monthKey); }
+        function takeSnapshot(monthKey) { const w = state.wealth; const b = state.balances; const liquid = b.bank + b.save + (w.invest||0) + (w.pension_m||0) + (w.pension_k||0) + (w.group_m||0) + (w.group_k||0); const totalNW = liquid + (w.mor_val||0) + (w.sig_val||0) - (w.mor_debt||0) - (w.sig_debt||0); state.wealth.history.push({ month: monthKey, total: totalNW, liquid: liquid }); saveState(); }
+
+        // --- 9. INSTELLINGEN BEHEER ---
+        function renderSettingsFixed() { document.getElementById('settings-fc-list').innerHTML = state.fixedCosts.map(c => `<div class="flex gap-2 items-center bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border border-slate-100 dark:border-slate-700"><input type="text" value="${c.icon}" onchange="updateFC('${c.id}', 'icon', this.value)" class="w-8 text-center bg-transparent border-b outline-none"><input type="text" value="${c.name}" onchange="updateFC('${c.id}', 'name', this.value)" class="flex-1 text-sm font-bold bg-transparent border-b outline-none text-slate-800 dark:text-white"><span class="text-xs text-slate-400">€</span><input type="number" value="${c.amount}" onchange="updateFC('${c.id}', 'amount', this.value)" class="w-16 text-right text-sm font-bold text-brand-purple dark:text-brand-yellow bg-transparent border-b outline-none"><button onclick="deleteFC('${c.id}')" class="text-red-400 font-black ml-1 p-1">✕</button></div>`).join(''); }
+        function saveWealthStarts() { state.wealth.mor_start = parseFloat(document.getElementById('set-mor-start').value) || 0; state.wealth.sig_start = parseFloat(document.getElementById('set-sig-start').value) || 0; saveState(); alert('Startbedragen Hypotheken Opgeslagen!'); }
+        function updateFC(id, field, value) { const fc = state.fixedCosts.find(c => c.id === id); if (field === 'amount') fc[field] = parseFloat(value) || 0; else fc[field] = value; saveState(); renderSettingsFixed(); }
+        function addFC() { state.fixedCosts.push({ id: 'f' + Date.now(), name: 'Nieuw', amount: 0, icon: '🏷️' }); saveState(); renderSettingsFixed(); }
+        function deleteFC(id) { if(confirm('Definitief verwijderen?')) { state.fixedCosts = state.fixedCosts.filter(c => c.id !== id); saveState(); renderSettingsFixed(); } }
+        function saveInitBalances() { state.sinkingFundMonthly = parseFloat(document.getElementById('set-sf-amount').value) || 0; state.balances.bank = parseFloat(document.getElementById('set-bank').value) || 0; state.balances.save = parseFloat(document.getElementById('set-save').value) || 0; saveState(); alert('Instellingen opgeslagen!'); }
+        
+        // Exporteren doet alleen een JSON download (handig als backup!)
+        function exportJSON() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(state)], {type: 'application/json'})); a.download = `GeldStroom_Backup_${new Date().toISOString().split('T')[0]}.json`; a.click(); }
+        
+        // Importeren overschrijft ALLES en pusht naar Cloud
+        function importJSON(e) { const reader = new FileReader(); reader.onload = (ev) => { state = JSON.parse(ev.target.result); saveState(); alert('Oude data is succesvol in de cloud gezet!'); location.reload(); }; reader.readAsText(e.target.files[0]); }
+        
+        function hardResetApp() { if(confirm('🚨 ALLES WISSEN? Dit verwijdert je data OOK in de cloud voor iedereen!')) { state = { balances: {bank:0,save:0}, transactions:[], sinkingFundMonthly:100, fixedCosts:DEFAULT_FIXED, wealth:{invest:0,pension_m:0,pension_k:0,group_m:0,group_k:0,mor_start:200000,mor_val:0,mor_debt:0,sig_start:200000,sig_val:0,sig_debt:0,history:[]} }; saveState(); alert('Kluis is leeggehaald!'); location.reload(); } }
+
+    </script>
+</body>
+</html>
