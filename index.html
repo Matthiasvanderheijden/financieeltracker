@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GeldStroom V9.1 - Wealth Graphs</title>
+    <title>GeldStroom V9.3 - Line Charts & Transfers</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -24,13 +24,10 @@
         body { -webkit-tap-highlight-color: transparent; }
         input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        
         .trend-scroll::-webkit-scrollbar { height: 6px; }
         .trend-scroll::-webkit-scrollbar-track { background: transparent; }
         .trend-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .dark .trend-scroll::-webkit-scrollbar-thumb { background: #475569; }
-        
-        /* Login Overlay */
         #login-overlay { display: flex; }
         .hidden-login { display: none !important; }
     </style>
@@ -41,11 +38,9 @@
         <div class="w-full max-w-sm bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-2xl text-slate-800 dark:text-white">
             <h1 class="text-3xl font-black italic tracking-widest text-brand-purple dark:text-brand-yellow mb-2 text-center">GELDSTROOM</h1>
             <p class="text-xs text-center text-slate-400 mb-8 uppercase tracking-widest">Cloud Editie</p>
-            
             <input type="email" id="login-email" placeholder="E-mailadres" class="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-xl mb-4 outline-none border border-slate-200 dark:border-slate-700">
             <input type="password" id="login-pass" placeholder="Wachtwoord" class="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-xl mb-2 outline-none border border-slate-200 dark:border-slate-700">
             <p id="login-error" class="text-red-500 text-xs font-bold h-4 mb-4 text-center"></p>
-            
             <button onclick="login()" id="btn-login" class="w-full bg-brand-purple dark:bg-brand-yellow text-white dark:text-slate-900 p-4 rounded-xl font-black uppercase tracking-wider active:scale-95 transition-transform">Inloggen</button>
             <p id="login-loading" class="text-center text-xs text-slate-400 mt-4 hidden">Verbinden met de cloud...</p>
         </div>
@@ -122,6 +117,12 @@
                 <input type="text" id="inp-note" placeholder="Notitie (optioneel)" class="w-full p-3 bg-slate-50 dark:bg-slate-900 rounded-xl mb-3 outline-none border border-slate-100 dark:border-slate-700 text-sm dark:text-white">
                 <input type="date" id="inp-date" class="w-full p-3 bg-slate-50 dark:bg-slate-900 rounded-xl mb-6 outline-none border border-slate-100 dark:border-slate-700 text-sm dark:text-white">
                 
+                <p class="text-[10px] font-bold text-blue-500 uppercase mb-3 tracking-wider">Overboeken (Intern)</p>
+                <div class="grid grid-cols-2 gap-2 mb-6">
+                    <button onclick="addTransaction('t_in', 'transfer', 'Spaar ➡️ Bank')" class="bg-blue-50 dark:bg-slate-700/50 border border-blue-100 dark:border-slate-600 p-3 rounded-2xl flex flex-col items-center justify-center text-[10px] font-bold text-blue-600 dark:text-blue-400 shadow-sm active:scale-95 text-center"><span class="text-xl mb-1">🏦</span>Van Spaar naar Bank</button>
+                    <button onclick="addTransaction('t_out', 'transfer', 'Bank ➡️ Spaar')" class="bg-blue-50 dark:bg-slate-700/50 border border-blue-100 dark:border-slate-600 p-3 rounded-2xl flex flex-col items-center justify-center text-[10px] font-bold text-blue-600 dark:text-blue-400 shadow-sm active:scale-95 text-center"><span class="text-xl mb-1">🐷</span>Van Bank naar Spaar</button>
+                </div>
+
                 <p class="text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-wider">Variabele Uitgaven</p>
                 <div id="grid-var" class="grid grid-cols-4 gap-2 mb-6"></div>
 
@@ -142,7 +143,6 @@
                     <button onclick="reconcileBank()" class="bg-brand-yellow text-slate-900 px-4 rounded-xl font-bold text-xs uppercase tracking-wider">Check</button>
                 </div>
             </div>
-
             <h2 class="text-xl font-black mb-4 dark:text-white">Transacties <span id="cloud-status" class="text-[10px] text-green-500 ml-2 font-normal">🟢 Live</span></h2>
             <div id="history-list" class="space-y-2"></div>
         </section>
@@ -153,7 +153,7 @@
                 <select id="ana-month" onchange="renderAnalysis()" class="flex-1 p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 font-bold dark:text-white outline-none"></select>
                 <select id="ana-year" onchange="renderAnalysis()" class="flex-1 p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 font-bold dark:text-white outline-none"></select>
             </div>
-
+            
             <div class="bg-slate-800 p-5 rounded-3xl shadow-lg mb-6 text-white border border-slate-700">
                 <h3 class="font-bold text-[10px] text-brand-yellow uppercase tracking-wider mb-4">Macro Overzicht</h3>
                 <div class="grid grid-cols-2 gap-4 mb-4">
@@ -167,21 +167,19 @@
             </div>
 
             <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
-                <h3 class="font-bold text-[10px] text-slate-400 uppercase tracking-wider mb-4">Vermogensontwikkeling</h3>
+                <h3 class="font-bold text-[10px] text-slate-400 uppercase tracking-wider mb-2">Vermogensontwikkeling (Lijngrafieken)</h3>
                 
-                <div class="mb-5">
+                <div class="mb-2 mt-4">
                     <p class="text-[9px] font-bold text-blue-500 uppercase mb-2">Totaal Vermogen</p>
-                    <div class="w-full overflow-x-auto trend-scroll pb-2"><div id="chart-wealth-total" class="flex items-end gap-2 h-20 min-w-max px-2"></div></div>
+                    <div class="w-full overflow-x-auto trend-scroll"><div id="chart-wealth-total"></div></div>
                 </div>
-                
-                <div class="mb-5">
+                <div class="mb-2 mt-6">
                     <p class="text-[9px] font-bold text-brand-yellow uppercase mb-2">FIRE Vermogen (Liquide)</p>
-                    <div class="w-full overflow-x-auto trend-scroll pb-2"><div id="chart-wealth-fire" class="flex items-end gap-2 h-20 min-w-max px-2"></div></div>
+                    <div class="w-full overflow-x-auto trend-scroll"><div id="chart-wealth-fire"></div></div>
                 </div>
-                
-                <div>
+                <div class="mt-6">
                     <p class="text-[9px] font-bold text-brand-purple uppercase mb-2">Spaarrekening</p>
-                    <div class="w-full overflow-x-auto trend-scroll pb-2"><div id="chart-wealth-save" class="flex items-end gap-2 h-20 min-w-max px-2"></div></div>
+                    <div class="w-full overflow-x-auto trend-scroll"><div id="chart-wealth-save"></div></div>
                 </div>
             </div>
 
@@ -207,14 +205,12 @@
                     <div class="text-right text-[10px] opacity-50">Zonder stenen/schuld</div>
                 </div>
             </div>
-
             <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6 space-y-5">
                 <h3 class="font-bold text-[10px] text-slate-400 uppercase tracking-wider mb-2">Onze Doelen</h3>
                 <div><div class="flex justify-between text-xs font-bold mb-1 dark:text-slate-200"><span>🎯 Pensioen 2054 (1 Miljoen)</span><span id="goal-fire-pct">0%</span></div><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3"><div id="goal-fire-bar" class="bg-brand-purple dark:bg-brand-yellow h-3 rounded-full transition-all duration-500" style="width: 0%"></div></div></div>
                 <div><div class="flex justify-between text-xs font-bold mb-1 dark:text-slate-200"><span>🏠 Hypotheek Moretuslei</span><span id="goal-mor-pct">0%</span></div><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3"><div id="goal-mor-bar" class="bg-green-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div></div><p class="text-[9px] text-slate-400 mt-1 text-right" id="goal-mor-text">Nog te gaan...</p></div>
                 <div><div class="flex justify-between text-xs font-bold mb-1 dark:text-slate-200"><span>🏠 Hypotheek Sigarenstraat</span><span id="goal-sig-pct">0%</span></div><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3"><div id="goal-sig-bar" class="bg-green-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div></div><p class="text-[9px] text-slate-400 mt-1 text-right" id="goal-sig-text">Nog te gaan...</p></div>
             </div>
-
             <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
                 <h3 class="font-bold text-[10px] text-brand-purple dark:text-brand-yellow uppercase tracking-wider mb-4">Waardes Updaten (Maandelijks)</h3>
                 <div class="mb-4">
@@ -239,7 +235,6 @@
 
         <section id="tab-settings" class="tab-content p-5">
             <h2 class="text-xl font-black mb-6 dark:text-white">Instellingen</h2>
-            
             <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm mb-6 border border-slate-100 dark:border-slate-700">
                 <h3 class="font-bold mb-3 text-xs uppercase text-brand-purple dark:text-brand-yellow">1. Startbedragen Hypotheken (Doelen)</h3>
                 <div class="grid grid-cols-2 gap-3 mb-3">
@@ -248,26 +243,20 @@
                 </div>
                 <button onclick="saveWealthStarts()" class="w-full bg-slate-800 dark:bg-slate-700 text-white p-3 rounded-xl font-bold text-sm">Opslaan Startbedragen</button>
             </div>
-
             <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm mb-6 border border-slate-100 dark:border-slate-700">
                 <h3 class="font-bold mb-3 text-xs uppercase text-brand-purple dark:text-brand-yellow">2. Saldi & Buffer (Sinking Fund)</h3>
                 <div class="grid grid-cols-2 gap-3 mb-3">
-                    <div class="col-span-2">
-                        <label class="text-[10px] text-slate-500 uppercase font-bold">Sinking Fund (Bedrag per maand)</label>
-                        <input type="number" id="set-sf-amount" class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none">
-                    </div>
+                    <div class="col-span-2"><label class="text-[10px] text-slate-500 uppercase font-bold">Sinking Fund (Bedrag per maand)</label><input type="number" id="set-sf-amount" class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none"></div>
                     <div><label class="text-[10px] text-slate-500 uppercase font-bold">Bank Saldo</label><input type="number" id="set-bank" class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none"></div>
                     <div><label class="text-[10px] text-slate-500 uppercase font-bold">Spaar Saldo</label><input type="number" id="set-save" class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none"></div>
                 </div>
                 <button onclick="saveInitBalances()" class="w-full bg-slate-800 dark:bg-slate-700 text-white p-3 rounded-xl font-bold text-sm">Opslaan Instellingen</button>
             </div>
-
             <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm mb-6 border border-slate-100 dark:border-slate-700">
                 <h3 class="font-bold mb-3 text-xs uppercase text-brand-purple dark:text-brand-yellow">3. Vaste Lasten Beheren</h3>
                 <div id="settings-fc-list" class="space-y-2 mb-4"></div>
                 <button onclick="addFC()" class="w-full bg-brand-light dark:bg-slate-700 text-brand-purple dark:text-brand-yellow p-3 rounded-xl font-bold text-xs uppercase tracking-wider">+ Voeg Vaste Kost Toe</button>
             </div>
-
             <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm mb-6 border border-slate-100 dark:border-slate-700">
                 <h3 class="font-bold mb-3 text-xs uppercase text-brand-purple dark:text-brand-yellow">4. Cloud Beheer & Backups</h3>
                 <div class="grid grid-cols-2 gap-2 mb-4">
@@ -276,7 +265,6 @@
                 </div>
                 <button onclick="document.getElementById('file-import').click()" class="w-full mb-4 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-white p-3 rounded-xl font-bold text-xs shadow-sm">Upload Oude Data naar Cloud</button>
                 <input type="file" id="file-import" class="hidden" accept=".json" onchange="importJSON(event)">
-                
                 <button onclick="hardResetApp()" class="w-full bg-red-600 text-white p-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg active:scale-95">⚠️ Wis Account Data</button>
             </div>
         </section>
@@ -386,10 +374,25 @@
 
         // --- 6. CORE LOGICA ---
         function addTransaction(catId, type, nameOverride) {
-            const amt = parseFloat(document.getElementById('inp-amt').value); const date = document.getElementById('inp-date').value; const note = document.getElementById('inp-note').value.trim();
+            let amt = parseFloat(document.getElementById('inp-amt').value); 
+            const date = document.getElementById('inp-date').value; 
+            const note = document.getElementById('inp-note').value.trim();
+            
             if (!amt || !date) return alert('Vul een bedrag en datum in.');
-            const finalAmt = (type === 'income') ? amt : -Math.abs(amt);
-            if (catId === 'v7') { state.balances.bank += finalAmt; state.balances.save += Math.abs(amt); } else { state.balances.bank += finalAmt; }
+            amt = Math.abs(amt); 
+            let finalAmt = (type === 'income') ? amt : -amt;
+            
+            // Speciale logica voor transfers
+            if (catId === 't_in') { // Spaar naar Bank
+                state.balances.save -= amt; state.balances.bank += amt;
+            } else if (catId === 't_out') { // Bank naar Spaar
+                state.balances.bank -= amt; state.balances.save += amt;
+            } else if (catId === 'v7') { // Sparen (variabel via budget)
+                state.balances.bank -= amt; state.balances.save += amt;
+            } else { // Normale in/uit
+                state.balances.bank += finalAmt; 
+            }
+            
             state.transactions.push({ id: Date.now(), catId, type, amount: finalAmt, date, note: note || nameOverride });
             document.getElementById('inp-amt').value = ''; document.getElementById('inp-note').value = '';
             checkWealthSnapshot(); saveState(); switchTab('dash');
@@ -455,17 +458,64 @@
         function renderHistory() {
             const list = [...state.transactions].sort((a,b) => new Date(b.date) - new Date(a.date));
             document.getElementById('history-list').innerHTML = list.map(t => {
-                let color = 'text-slate-800 dark:text-white'; if(t.type === 'income') color = 'text-green-600 dark:text-green-400'; if(t.type === 'correction') color = 'text-brand-yellow';
-                return `<div class="bg-white dark:bg-slate-800 p-3 rounded-2xl flex justify-between items-center text-sm shadow-sm border border-slate-50 dark:border-slate-700"><div><p class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">${t.note}</p><p class="text-[10px] text-slate-400">${t.date} | ${t.type.toUpperCase()}</p></div><div class="text-right"><p class="font-bold ${color}">${t.amount > 0 ? '+' : ''}€${t.amount.toFixed(2)}</p><button onclick="delTransaction(${t.id})" class="text-[9px] uppercase text-red-300 mt-1">Wis</button></div></div>`;
+                let color = 'text-slate-800 dark:text-white'; 
+                let prefix = t.amount > 0 ? '+' : '';
+                
+                if(t.type === 'income') color = 'text-green-600 dark:text-green-400'; 
+                if(t.type === 'correction') color = 'text-brand-yellow';
+                if(t.type === 'transfer') { color = 'text-blue-500'; prefix = '↔ '; }
+                
+                return `<div class="bg-white dark:bg-slate-800 p-3 rounded-2xl flex justify-between items-center text-sm shadow-sm border border-slate-50 dark:border-slate-700"><div><p class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">${t.note}</p><p class="text-[10px] text-slate-400">${t.date} | ${t.type.toUpperCase()}</p></div><div class="text-right"><p class="font-bold ${color}">${prefix}€${Math.abs(t.amount).toFixed(2)}</p><button onclick="delTransaction(${t.id})" class="text-[9px] uppercase text-red-300 mt-1">Wis</button></div></div>`;
             }).join('') || '<p class="text-sm text-slate-400">Nog geen transacties.</p>';
         }
 
         function delTransaction(id) {
             if(!confirm('Transactie wissen?')) return;
             const t = state.transactions.find(x => x.id === id);
-            if(t.catId === 'v7' || t.catId === 'transfer_sf') { state.balances.bank -= t.amount; state.balances.save -= Math.abs(t.amount); } else { state.balances.bank -= t.amount; }
+            
+            // Omgekeerde logica om de balances te herstellen
+            let absAmt = Math.abs(t.amount);
+            if (t.catId === 't_in') { state.balances.save += absAmt; state.balances.bank -= absAmt; }
+            else if (t.catId === 't_out') { state.balances.bank += absAmt; state.balances.save -= absAmt; }
+            else if (t.catId === 'v7' || t.catId === 'transfer_sf') { state.balances.bank += absAmt; state.balances.save -= absAmt; }
+            else { state.balances.bank -= t.amount; }
+            
             state.transactions = state.transactions.filter(x => x.id !== id); saveState();
         }
+
+        // Helper voor het tekenen van de SVG Lijngrafieken
+        const renderLineChart = (data, colorClass, hexColor) => {
+            if(data.length === 0) return '<p class="text-[9px] text-slate-400">Nog geen data</p>';
+            
+            const maxVal = Math.max(...data.map(d => d.val), 1) * 1.1; // 10% ruimte bovenaan
+            const cWidth = Math.max(data.length * 50, 200); // 50px breedte per stip
+            
+            // Teken de lijn
+            let points = data.map((d, i) => {
+                let x = data.length > 1 ? (i / (data.length - 1)) * 100 : 50;
+                let y = 100 - ((d.val / maxVal) * 100);
+                return `${x},${y}`;
+            }).join(' ');
+            
+            // Teken de stipjes (HTML nodes overlay)
+            let htmlPoints = data.map((d, i) => {
+                let x = data.length > 1 ? (i / (data.length - 1)) * 100 : 50;
+                let y = (d.val / maxVal) * 100;
+                return `
+                <div class="absolute top-0 h-[calc(100%-20px)] w-8 -ml-4 group flex justify-center cursor-pointer z-10" style="left: ${x}%">
+                    <div class="absolute w-2 h-2 rounded-full ${colorClass} shadow-md transition-transform group-hover:scale-[2] border border-white dark:border-slate-800" style="bottom: ${y}%; transform: translateY(50%)"></div>
+                    <div class="absolute bottom-full mb-1 hidden group-hover:block bg-slate-800 text-white text-[9px] p-1.5 rounded z-20 whitespace-nowrap text-center shadow-lg">€${Math.round(d.val).toLocaleString('nl-BE')}</div>
+                    <div class="absolute bottom-[-20px] text-[8px] font-bold text-slate-400 whitespace-nowrap">${d.label}</div>
+                </div>`;
+            }).join('');
+
+            return `<div class="relative h-20 mt-2 pb-6" style="width: ${cWidth}px">
+                <svg class="absolute top-0 left-0 w-full h-[calc(100%-20px)] overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
+                    <polyline points="${points}" fill="none" stroke="${hexColor}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                ${htmlPoints}
+            </div>`;
+        };
 
         // --- 7. ANALYSE (MET VERMOGENSGRAFIEKEN) ---
         function fillAnalysisSelectors() {
@@ -485,7 +535,7 @@
             const totalOutVar = Math.abs(tMonthAll.filter(t => t.type === 'var').reduce((s,t) => s + t.amount, 0));
             const totalOut = totalOutFixed + totalOutVar; const surplus = totalIn - totalOut;
 
-            const activeSavings = Math.abs(tMonthAll.filter(t => t.catId === 'v7' || t.catId === 'transfer_sf').reduce((s,t) => s + t.amount, 0));
+            const activeSavings = Math.abs(tMonthAll.filter(t => t.catId === 'v7' || t.catId === 'transfer_sf' || t.catId === 't_out').reduce((s,t) => s + t.amount, 0));
             const trueSavingsRate = totalIn > 0 ? Math.round((activeSavings / totalIn) * 100) : 0;
 
             document.getElementById('ana-tot-in').innerText = `€ ${totalIn.toFixed(2)}`; document.getElementById('ana-tot-out').innerText = `€ ${totalOut.toFixed(2)}`;
@@ -500,9 +550,9 @@
                 return `<div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-50 dark:border-slate-700 shadow-sm"><div class="flex justify-between text-xs font-bold mb-1 dark:text-slate-200"><span>${c.icon} ${Object.keys(breakdown).find(k => breakdown[k] === c)}</span><span>€${c.total.toFixed(2)}</span></div><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2"><div class="bg-brand-purple dark:bg-brand-yellow h-2 rounded-full" style="width: ${pct}%"></div></div></div>`;
             }).join('') || '<p class="text-sm text-slate-400">Geen variabele data.</p>';
 
-            // Jaar Trendgrafiek In/Uit
+            // Jaar Trendgrafiek In/Uit (Balken)
             document.getElementById('ana-trend-year').innerText = y; const chartContainer = document.getElementById('ana-trend-chart'); chartContainer.innerHTML = '';
-            const monthsNames = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]; let maxAmt = 1; 
+            const monthsNames = ["Jan", "Feb", "Mrt", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"]; let maxAmt = 1; 
 
             const yearlyData = [];
             for(let i=0; i<12; i++) {
@@ -511,39 +561,24 @@
                 if(mIn > maxAmt) maxAmt = mIn; if(mOut > maxAmt) maxAmt = mOut; yearlyData.push({ mIn, mOut });
             }
             yearlyData.forEach((d, index) => {
-                chartContainer.innerHTML += `<div class="flex flex-col items-center justify-end h-full gap-1 w-8 flex-shrink-0"><div class="flex items-end gap-[2px] w-full h-full relative group"><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-800 text-white text-[8px] p-1 rounded z-10 whitespace-nowrap">In: €${Math.round(d.mIn)}<br>Uit: €${Math.round(d.mOut)}</div><div class="w-1/2 bg-green-400 rounded-t-sm" style="height: ${(d.mIn / maxAmt) * 100}%"></div><div class="w-1/2 bg-brand-purple dark:bg-brand-yellow rounded-t-sm" style="height: ${(d.mOut / maxAmt) * 100}%"></div></div><span class="text-[8px] font-bold text-slate-400">${monthsNames[index]}</span></div>`;
+                chartContainer.innerHTML += `<div class="flex flex-col items-center justify-end h-full gap-1 w-8 flex-shrink-0"><div class="flex items-end gap-[2px] w-full h-full relative group"><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-800 text-white text-[8px] p-1 rounded z-10 whitespace-nowrap">In: €${Math.round(d.mIn)}<br>Uit: €${Math.round(d.mOut)}</div><div class="w-1/2 bg-green-400 rounded-t-sm" style="height: ${(d.mIn / maxAmt) * 100}%"></div><div class="w-1/2 bg-brand-purple dark:bg-brand-yellow rounded-t-sm" style="height: ${(d.mOut / maxAmt) * 100}%"></div></div><span class="text-[8px] font-bold text-slate-400">${monthsNames[index].substring(0,1)}</span></div>`;
             });
 
-            // --- NIEUW: Vermogensgrafieken (Totaal, FIRE, Spaar) ---
+            // --- NIEUW: Vermogensgrafieken (Lijngrafieken) ---
             const wealthHistory = [...state.wealth.history].sort((a,b) => a.month.localeCompare(b.month));
-            const chartTotal = document.getElementById('chart-wealth-total');
-            const chartFire = document.getElementById('chart-wealth-fire');
-            const chartSave = document.getElementById('chart-wealth-save');
             
-            let maxTotal = Math.max(...wealthHistory.map(h => h.total), 1);
-            let maxLiquid = Math.max(...wealthHistory.map(h => h.liquid), 1);
-            let maxSave = Math.max(...wealthHistory.map(h => h.save_balance || 0), 1);
-
             const formatMonth = (ym) => {
                 const parts = ym.split('-'); if(parts.length < 2) return ym;
                 return monthsNames[parseInt(parts[1], 10) - 1];
             };
 
-            const renderWBar = (val, max, color, label) => {
-                let pct = max > 0 ? (val / max) * 100 : 0;
-                if(pct > 0 && pct < 2) pct = 2; // Zorgt dat kleine bedragen toch een minimaal balkje hebben
-                return `<div class="flex flex-col items-center justify-end h-full gap-1 w-10 flex-shrink-0 group">
-                            <div class="w-full h-full relative flex items-end justify-center">
-                                <div class="absolute bottom-full mb-1 hidden group-hover:block bg-slate-800 text-white text-[8px] p-1 rounded z-10 whitespace-nowrap">€${Math.round(val).toLocaleString('nl-BE')}</div>
-                                <div class="w-3/4 ${color} rounded-t-sm transition-all" style="height: ${pct}%"></div>
-                            </div>
-                            <span class="text-[8px] font-bold text-slate-400">${label}</span>
-                        </div>`;
-            };
+            const dataTotal = wealthHistory.map(h => ({ val: h.total, label: formatMonth(h.month) }));
+            const dataFire = wealthHistory.map(h => ({ val: h.liquid, label: formatMonth(h.month) }));
+            const dataSave = wealthHistory.map(h => ({ val: h.save_balance || 0, label: formatMonth(h.month) }));
 
-            chartTotal.innerHTML = wealthHistory.map(h => renderWBar(h.total, maxTotal, 'bg-blue-500', formatMonth(h.month))).join('') || '<p class="text-[9px] text-slate-400">Nog geen data</p>';
-            chartFire.innerHTML = wealthHistory.map(h => renderWBar(h.liquid, maxLiquid, 'bg-brand-yellow', formatMonth(h.month))).join('') || '<p class="text-[9px] text-slate-400">Nog geen data</p>';
-            chartSave.innerHTML = wealthHistory.map(h => renderWBar(h.save_balance || 0, maxSave, 'bg-brand-purple', formatMonth(h.month))).join('') || '<p class="text-[9px] text-slate-400">Nog geen data</p>';
+            document.getElementById('chart-wealth-total').innerHTML = renderLineChart(dataTotal, 'bg-blue-500', '#3b82f6');
+            document.getElementById('chart-wealth-fire').innerHTML = renderLineChart(dataFire, 'bg-brand-yellow', '#facc15');
+            document.getElementById('chart-wealth-save').innerHTML = renderLineChart(dataSave, 'bg-brand-purple', '#6b21a8');
         }
 
         // --- 8. VERMOGEN (WEALTH) ---
@@ -574,7 +609,6 @@
             w.invest = parseFloat(document.getElementById('w-invest').value) || 0; w.pension_m = parseFloat(document.getElementById('w-pension-m').value) || 0; w.pension_k = parseFloat(document.getElementById('w-pension-k').value) || 0; w.group_m = parseFloat(document.getElementById('w-group-m').value) || 0; w.group_k = parseFloat(document.getElementById('w-group-k').value) || 0;
             w.mor_val = parseFloat(document.getElementById('w-mor-val').value) || 0; w.mor_debt = parseFloat(document.getElementById('w-mor-debt').value) || 0; w.sig_val = parseFloat(document.getElementById('w-sig-val').value) || 0; w.sig_debt = parseFloat(document.getElementById('w-sig-debt').value) || 0;
             
-            // Oude snapshot van de huidige maand verwijderen, zodat we een verse inclusief spaargeld opslaan
             const now = new Date(); const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             state.wealth.history = state.wealth.history.filter(h => h.month !== monthKey); 
             
@@ -592,18 +626,12 @@
             state.wealth.history = state.wealth.history.filter(h => h.month !== monthKey); takeSnapshot(monthKey); 
         }
 
-        // UPDATE: Slaat nu ook save_balance op in de geschiedenis
         function takeSnapshot(monthKey) { 
             const w = state.wealth; const b = state.balances; 
             const liquid = b.bank + b.save + (w.invest||0) + (w.pension_m||0) + (w.pension_k||0) + (w.group_m||0) + (w.group_k||0); 
             const totalNW = liquid + (w.mor_val||0) + (w.sig_val||0) - (w.mor_debt||0) - (w.sig_debt||0); 
             
-            state.wealth.history.push({ 
-                month: monthKey, 
-                total: totalNW, 
-                liquid: liquid,
-                save_balance: b.save // NIEUW
-            }); 
+            state.wealth.history.push({ month: monthKey, total: totalNW, liquid: liquid, save_balance: b.save }); 
             saveState(); 
         }
 
