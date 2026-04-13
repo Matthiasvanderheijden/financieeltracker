@@ -456,7 +456,7 @@
         }
 
         function renderHistory() {
-            const list = [...state.transactions].sort((a,b) => new Date(b.date) - new Date(a.date));
+            const list = [...state.transactions].sort((a,b) => new Date(b.date) - new Date(a.date) || b.id - a.id);
             document.getElementById('history-list').innerHTML = list.map(t => {
                 let color = 'text-slate-800 dark:text-white'; 
                 let prefix = t.amount > 0 ? '+' : '';
