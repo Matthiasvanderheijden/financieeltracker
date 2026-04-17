@@ -542,12 +542,15 @@
             document.getElementById('ana-surplus').innerText = `€ ${surplus.toFixed(2)}`; document.getElementById('ana-surplus').className = `text-lg font-bold ${surplus >= 0 ? 'text-green-500' : 'text-red-500'}`;
             document.getElementById('ana-savings-rate').innerText = `${trueSavingsRate}%`;
 
-            // Variabele Taart/Lijst
-            const breakdown = {}; VAR_CATS.forEach(c => breakdown[c.name] = { total: 0, icon: c.icon });
-            tMonthAll.filter(t => t.type === 'var').forEach(t => { if(breakdown[t.note]) breakdown[t.note].total += Math.abs(t.amount); });
+           // Variabele Taart/Lijst (Kijkt nu naar vaste Categorie ID, niet naar je notitie)
+            const breakdown = {}; 
+            VAR_CATS.forEach(c => breakdown[c.id] = { name: c.name, total: 0, icon: c.icon });
+            tMonthAll.filter(t => t.type === 'var').forEach(t => { 
+                if(breakdown[t.catId]) breakdown[t.catId].total += Math.abs(t.amount); 
+            });
             document.getElementById('ana-breakdown').innerHTML = Object.values(breakdown).filter(c => c.total > 0).sort((a,b) => b.total - a.total).map(c => {
                 const pct = totalOutVar > 0 ? Math.round((c.total / totalOutVar) * 100) : 0;
-                return `<div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-50 dark:border-slate-700 shadow-sm"><div class="flex justify-between text-xs font-bold mb-1 dark:text-slate-200"><span>${c.icon} ${Object.keys(breakdown).find(k => breakdown[k] === c)}</span><span>€${c.total.toFixed(2)}</span></div><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2"><div class="bg-brand-purple dark:bg-brand-yellow h-2 rounded-full" style="width: ${pct}%"></div></div></div>`;
+                return `<div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-50 dark:border-slate-700 shadow-sm"><div class="flex justify-between text-xs font-bold mb-1 dark:text-slate-200"><span>${c.icon} ${c.name}</span><span>€${c.total.toFixed(2)}</span></div><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2"><div class="bg-brand-purple dark:bg-brand-yellow h-2 rounded-full" style="width: ${pct}%"></div></div></div>`;
             }).join('') || '<p class="text-sm text-slate-400">Geen variabele data.</p>';
 
             // Jaar Trendgrafiek In/Uit (Balken)
