@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GeldStroom V9.4 - Budget Sync</title>
+    <title>GeldStroom V9.5 - Golden Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -170,9 +170,13 @@
                 <div class="mb-2 mt-6"><p class="text-[9px] font-bold text-brand-yellow uppercase mb-2">FIRE Vermogen (Liquide)</p><div class="w-full overflow-x-auto trend-scroll"><div id="chart-wealth-fire"></div></div></div>
                 <div class="mt-6"><p class="text-[9px] font-bold text-brand-purple uppercase mb-2">Spaarrekening</p><div class="w-full overflow-x-auto trend-scroll"><div id="chart-wealth-save"></div></div></div>
             </div>
-            <div id="ana-breakdown" class="space-y-3 mb-6"></div>
-            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
+                <h3 class="font-bold text-[10px] text-slate-400 uppercase tracking-wider mb-3">Variabele Categorieën</h3>
+                <div id="ana-breakdown" class="space-y-3"></div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
                 <h3 class="font-bold text-[10px] text-slate-400 uppercase tracking-wider mb-4">Jaar Trendgrafiek (In/Uit) <span id="ana-trend-year" class="text-brand-purple dark:text-brand-yellow"></span></h3>
+                <p class="text-[9px] text-slate-400 mb-4 text-center">Groen = Inkomsten | Paars = Uitgaven</p>
                 <div class="w-full overflow-x-auto trend-scroll pb-2"><div id="ana-trend-chart" class="flex items-end gap-2 h-40 min-w-max px-2"></div></div>
             </div>
         </section>
@@ -184,21 +188,32 @@
                 <p id="nw-total" class="text-4xl font-black mb-4">€ 0.00</p>
                 <div class="border-t border-slate-700 pt-4 flex justify-between items-end">
                     <div><p class="text-[9px] uppercase font-bold opacity-70 mb-1 tracking-wider text-brand-light">FIRE Getal (Liquide)</p><p id="nw-liquid" class="text-xl font-bold">€ 0.00</p></div>
+                    <div class="text-right text-[10px] opacity-50">Zonder stenen/schuld</div>
                 </div>
             </div>
             <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6 space-y-5">
                 <h3 class="font-bold text-[10px] text-slate-400 uppercase tracking-wider mb-2">Onze Doelen</h3>
-                <div><div class="flex justify-between text-xs font-bold mb-1 dark:text-slate-200"><span>🎯 Pensioen 2054 (1 Miljoen)</span><span id="goal-fire-pct">0%</span></div><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3"><div id="goal-fire-bar" class="bg-brand-purple dark:bg-brand-yellow h-3 rounded-full transition-all" style="width: 0%"></div></div></div>
+                <div><div class="flex justify-between text-xs font-bold mb-1 dark:text-slate-200"><span>🎯 Pensioen 2054 (1 Miljoen)</span><span id="goal-fire-pct">0%</span></div><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3"><div id="goal-fire-bar" class="bg-brand-purple dark:bg-brand-yellow h-3 rounded-full transition-all duration-500" style="width: 0%"></div></div></div>
+                <div><div class="flex justify-between text-xs font-bold mb-1 dark:text-slate-200"><span>🏠 Hypotheek Moretuslei</span><span id="goal-mor-pct">0%</span></div><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3"><div id="goal-mor-bar" class="bg-green-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div></div><p class="text-[9px] text-slate-400 mt-1 text-right" id="goal-mor-text">Nog te gaan...</p></div>
+                <div><div class="flex justify-between text-xs font-bold mb-1 dark:text-slate-200"><span>🏠 Hypotheek Sigarenstraat</span><span id="goal-sig-pct">0%</span></div><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3"><div id="goal-sig-bar" class="bg-green-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div></div><p class="text-[9px] text-slate-400 mt-1 text-right" id="goal-sig-text">Nog te gaan...</p></div>
             </div>
             <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
                 <h3 class="font-bold text-[10px] text-brand-purple dark:text-brand-yellow uppercase tracking-wider mb-4">Waardes Updaten (Maandelijks)</h3>
                 <div class="mb-4">
-                    <label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Beleggingen</label>
+                    <label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Gezamenlijke Beleggingen</label>
                     <input type="number" id="w-invest" class="w-full p-2 border-b bg-transparent outline-none dark:text-white dark:border-slate-600 mb-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div><label class="text-[10px] text-slate-500 font-bold uppercase">Pensioen M.</label><input type="number" id="w-pension-m" class="w-full p-2 border-b bg-transparent outline-none dark:text-white dark:border-slate-600"></div>
+                        <div><label class="text-[10px] text-slate-500 font-bold uppercase">Pensioen K.</label><input type="number" id="w-pension-k" class="w-full p-2 border-b bg-transparent outline-none dark:text-white dark:border-slate-600"></div>
                         <div><label class="text-[10px] text-slate-500 font-bold uppercase">Groepsverz. M.</label><input type="number" id="w-group-m" class="w-full p-2 border-b bg-transparent outline-none dark:text-white dark:border-slate-600"></div>
+                        <div><label class="text-[10px] text-slate-500 font-bold uppercase">Groepsverz. K.</label><input type="number" id="w-group-k" class="w-full p-2 border-b bg-transparent outline-none dark:text-white dark:border-slate-600"></div>
                     </div>
+                </div>
+                <div class="border-t dark:border-slate-700 pt-4 grid grid-cols-2 gap-3 mb-4">
+                    <div><label class="text-[10px] text-slate-500 font-bold uppercase">Waarde Moretuslei</label><input type="number" id="w-mor-val" class="w-full p-2 border-b bg-transparent outline-none dark:text-white dark:border-slate-600"></div>
+                    <div><label class="text-[10px] text-red-500 font-bold uppercase">Schuld Moretuslei</label><input type="number" id="w-mor-debt" class="w-full p-2 border-b bg-transparent outline-none text-red-600 dark:text-red-400 dark:border-slate-600"></div>
+                    <div><label class="text-[10px] text-slate-500 font-bold uppercase">Waarde Sigarenstr.</label><input type="number" id="w-sig-val" class="w-full p-2 border-b bg-transparent outline-none dark:text-white dark:border-slate-600"></div>
+                    <div><label class="text-[10px] text-red-500 font-bold uppercase">Schuld Sigarenstr.</label><input type="number" id="w-sig-debt" class="w-full p-2 border-b bg-transparent outline-none text-red-600 dark:text-red-400 dark:border-slate-600"></div>
                 </div>
                 <button onclick="updateWealthData()" class="w-full bg-brand-light dark:bg-slate-700 text-brand-purple dark:text-brand-yellow p-3 rounded-xl font-bold text-xs uppercase tracking-wider">Opslaan & Snapshot Maken</button>
             </div>
@@ -207,27 +222,42 @@
         <section id="tab-settings" class="tab-content p-5">
             <h2 class="text-xl font-black mb-6 dark:text-white">Instellingen</h2>
             <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm mb-6 border border-slate-100 dark:border-slate-700">
-                <h3 class="font-bold mb-3 text-xs uppercase text-brand-purple dark:text-brand-yellow">Sinking Fund & Saldi</h3>
+                <h3 class="font-bold mb-3 text-xs uppercase text-brand-purple dark:text-brand-yellow">1. Startbedragen Hypotheken (Doelen)</h3>
                 <div class="grid grid-cols-2 gap-3 mb-3">
-                    <div class="col-span-2"><label class="text-[10px] text-slate-500 uppercase font-bold">Sinking Fund / mnd</label><input type="number" id="set-sf-amount" class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none"></div>
+                    <div><label class="text-[10px] text-slate-500 uppercase font-bold">Moretuslei Start</label><input type="number" id="set-mor-start" class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none"></div>
+                    <div><label class="text-[10px] text-slate-500 uppercase font-bold">Sigarenstraat Start</label><input type="number" id="set-sig-start" class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none"></div>
+                </div>
+                <button onclick="saveWealthStarts()" class="w-full bg-slate-800 dark:bg-slate-700 text-white p-3 rounded-xl font-bold text-sm">Opslaan Startbedragen</button>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm mb-6 border border-slate-100 dark:border-slate-700">
+                <h3 class="font-bold mb-3 text-xs uppercase text-brand-purple dark:text-brand-yellow">2. Saldi & Buffer (Sinking Fund)</h3>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div class="col-span-2"><label class="text-[10px] text-slate-500 uppercase font-bold">Sinking Fund (Bedrag per maand)</label><input type="number" id="set-sf-amount" class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none"></div>
                     <div><label class="text-[10px] text-slate-500 uppercase font-bold">Bank Saldo</label><input type="number" id="set-bank" class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none"></div>
                     <div><label class="text-[10px] text-slate-500 uppercase font-bold">Spaar Saldo</label><input type="number" id="set-save" class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none"></div>
                 </div>
                 <button onclick="saveInitBalances()" class="w-full bg-slate-800 dark:bg-slate-700 text-white p-3 rounded-xl font-bold text-sm">Opslaan Instellingen</button>
             </div>
             <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm mb-6 border border-slate-100 dark:border-slate-700">
-                <h3 class="font-bold mb-3 text-xs uppercase text-brand-purple dark:text-brand-yellow">Vaste Lasten</h3>
+                <h3 class="font-bold mb-3 text-xs uppercase text-brand-purple dark:text-brand-yellow">3. Vaste Lasten Beheren</h3>
                 <div id="settings-fc-list" class="space-y-2 mb-4"></div>
-                <button onclick="addFC()" class="w-full bg-brand-light dark:bg-slate-700 text-brand-purple dark:text-brand-yellow p-3 rounded-xl font-bold text-xs uppercase tracking-wider">+ Voeg Toe</button>
+                <button onclick="addFC()" class="w-full bg-brand-light dark:bg-slate-700 text-brand-purple dark:text-brand-yellow p-3 rounded-xl font-bold text-xs uppercase tracking-wider">+ Voeg Vaste Kost Toe</button>
             </div>
             <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm mb-6 border border-slate-100 dark:border-slate-700">
-                <button onclick="logout()" class="w-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-white p-3 rounded-xl font-bold text-xs shadow-sm">Uitloggen</button>
-                <button onclick="hardResetApp()" class="w-full mt-4 bg-red-600 text-white p-4 rounded-xl font-black text-sm uppercase tracking-widest active:scale-95">⚠️ Wis Account Data</button>
+                <h3 class="font-bold mb-3 text-xs uppercase text-brand-purple dark:text-brand-yellow">4. Cloud Beheer & Backups</h3>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button onclick="exportJSON()" class="bg-brand-light dark:bg-slate-700 text-brand-purple dark:text-brand-yellow p-3 rounded-xl font-bold text-xs shadow-sm">Lokale Backup</button>
+                    <button onclick="logout()" class="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-white p-3 rounded-xl font-bold text-xs shadow-sm">Uitloggen</button>
+                </div>
+                <button onclick="document.getElementById('file-import').click()" class="w-full mb-4 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-white p-3 rounded-xl font-bold text-xs shadow-sm">Upload Oude Data naar Cloud</button>
+                <input type="file" id="file-import" class="hidden" accept=".json" onchange="importJSON(event)">
+                <button onclick="hardResetApp()" class="w-full bg-red-600 text-white p-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg active:scale-95">⚠️ Wis Account Data</button>
             </div>
         </section>
     </div>
 
     <script>
+        // --- 1. FIREBASE SETUP ---
         const firebaseConfig = {
             apiKey: "AIzaSyBkazu-3wmAcjUkfIEtACJFhiuoKgmcxfk",
             authDomain: "financieel-tracker.firebaseapp.com",
@@ -240,6 +270,7 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         
+        // --- 2. CONFIGURATIE & GLOBALE STATE ---
         const VAR_CATS = [{ id: 'v1', name: 'Vervoer', icon: '🚗' }, { id: 'v2', name: 'Huis/Tuin', icon: '🏡' }, { id: 'v3', name: 'Boodschap', icon: '🛒' }, { id: 'v4', name: 'Verzorging', icon: '✂️' }, { id: 'v5', name: 'Horeca', icon: '🍻' }, { id: 'v6', name: 'Uitstap', icon: '🎢' }, { id: 'v9', name: 'Medisch', icon: '💊' }, { id: 'v10', name: 'Kleding', icon: '👕' }, { id: 'v11', name: 'Creche', icon: '🎒' }, { id: 'v7', name: 'Sparen', icon: '📥' }, { id: 'v8', name: 'Diversen', icon: '📦' }];
         const INC_CATS = [{ id: 'i1', name: 'Loon M.', icon: '👨‍💼' }, { id: 'i2', name: 'Loon K.', icon: '👩‍💼' }, { id: 'i3', name: 'Kindergeld', icon: '👶' }, { id: 'i4', name: 'Andere', icon: '🎁' }];
         const DEFAULT_FIXED = [{ id: 'f1', name: 'Gas/Elek', amount: 130, icon: '⚡' }, { id: 'f2', name: 'Orange', amount: 64, icon: '📱' }, { id: 'f3', name: 'Garage', amount: 75, icon: '🅿️' }, { id: 'f4', name: 'Rekening', amount: 4.5, icon: '🏦' }, { id: 'f5', name: 'ABVV', amount: 20.75, icon: '🛡️' }, { id: 'f6', name: 'Basic-Fit', amount: 34.99, icon: '💪' }, { id: 'f7', name: 'DAZN', amount: 19.99, icon: '⚽' }, { id: 'f8', name: 'Streamz', amount: 13.99, icon: '🎬' }, { id: 'f9', name: 'V. Borre', amount: 16.99, icon: '📺' }, { id: 'f10', name: 'Netflix', amount: 21.99, icon: '🍿' }, { id: 'f11', name: 'Hypotheek', amount: 853.13, icon: '🏠' }, { id: 'f12', name: 'AXA 1', amount: 46.89, icon: '📄' }, { id: 'f13', name: 'AXA 2', amount: 30.96, icon: '📄' }, { id: 'f14', name: 'Pensioen', amount: 87.5, icon: '👴' }];
@@ -251,11 +282,13 @@
         let currentUserUid = null;
         let unsubscribe = null;
 
+        // --- 3. AUTHENTICATIE LOGICA ---
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUserUid = user.uid;
                 document.getElementById('login-overlay').classList.add('hidden-login');
                 document.getElementById('main-app').classList.remove('hidden');
+                document.getElementById('inp-date').valueAsDate = new Date(); // HIER IS DE DATUM HERSTELD
                 startCloudSync();
             } else {
                 currentUserUid = null;
@@ -267,26 +300,51 @@
 
         function login() {
             const email = document.getElementById('login-email').value; const pass = document.getElementById('login-pass').value;
-            auth.signInWithEmailAndPassword(email, pass).catch(err => alert("Inloggen mislukt"));
+            const errEl = document.getElementById('login-error'); const loadEl = document.getElementById('login-loading');
+            if (!email || !pass) return errEl.innerText = "Vul alles in.";
+            errEl.innerText = ""; loadEl.classList.remove('hidden'); document.getElementById('btn-login').disabled = true;
+            auth.signInWithEmailAndPassword(email, pass).catch(error => {
+                errEl.innerText = "Fout e-mailadres of wachtwoord."; loadEl.classList.add('hidden'); document.getElementById('btn-login').disabled = false;
+            });
         }
         function logout() { auth.signOut(); }
 
+        // --- 4. CLOUD SYNC LOGICA ---
         function startCloudSync() {
-            unsubscribe = db.collection('accounts').doc(currentUserUid).onSnapshot(doc => {
+            const docRef = db.collection('accounts').doc(currentUserUid);
+            unsubscribe = docRef.onSnapshot((doc) => {
                 if (doc.exists) {
                     state = doc.data();
+                    // Failsafe check
+                    if(!state.balances) state.balances = { bank: 0, save: 0 };
+                    if(!state.transactions) state.transactions = [];
+                    if(!state.sinkingFundMonthly) state.sinkingFundMonthly = 100;
+                    if(!state.fixedCosts) state.fixedCosts = DEFAULT_FIXED;
+                    if(!state.wealth) state.wealth = { invest: 0, pension_m: 0, pension_k: 0, group_m: 0, group_k: 0, mor_start: 200000, mor_val: 0, mor_debt: 0, sig_start: 200000, sig_val: 0, sig_debt: 0, history: [] };
+                    
                     document.getElementById('cloud-status').innerText = "🟢 Live";
                     updateUI(); 
-                } else { saveToCloud(); }
+                } else {
+                    let localData = localStorage.getItem('gs_v8_data');
+                    if (localData) { state = JSON.parse(localData); saveToCloud(); } else { saveToCloud(); }
+                }
+            }, (error) => {
+                console.error("Cloud Sync Error: ", error);
+                document.getElementById('cloud-status').innerText = "🔴 Offline";
+                document.getElementById('cloud-status').classList.replace('text-green-500', 'text-red-500');
             });
         }
 
-        function saveState() { saveToCloud(); updateUI(); }
+        function saveState() { localStorage.setItem('gs_v8_data', JSON.stringify(state)); saveToCloud(); updateUI(); }
         function saveToCloud() {
             if (!currentUserUid) return;
-            db.collection('accounts').doc(currentUserUid).set(state).then(() => { document.getElementById('cloud-status').innerText = "🟢 Live"; });
+            document.getElementById('cloud-status').innerText = "⏳ Bezig...";
+            db.collection('accounts').doc(currentUserUid).set(state).then(() => { document.getElementById('cloud-status').innerText = "🟢 Live"; }).catch(err => {
+                console.error("Cloud Save Error: ", err); document.getElementById('cloud-status').innerText = "🔴 Fout"; alert("Kon niet opslaan in de cloud. Ben je offline?");
+            });
         }
 
+        // --- 5. UI & TAB NAVIGATIE ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -294,24 +352,24 @@
             document.getElementById('btn-' + tabId).classList.add('active');
             if(tabId === 'analysis') fillAnalysisSelectors();
             if(tabId === 'wealth') fillWealthInputs();
-            if(tabId === 'settings') fillSettings();
+            if(tabId === 'settings') {
+                document.getElementById('set-sf-amount').value = state.sinkingFundMonthly; document.getElementById('set-bank').value = state.balances.bank.toFixed(2);
+                document.getElementById('set-save').value = state.balances.save.toFixed(2); document.getElementById('set-mor-start').value = state.wealth.mor_start; document.getElementById('set-sig-start').value = state.wealth.sig_start;
+                renderSettingsFixed();
+            }
         }
 
+        // --- 6. CORE LOGICA ---
         function addTransaction(catId, type, nameOverride) {
             let amt = parseFloat(document.getElementById('inp-amt').value); 
             const date = document.getElementById('inp-date').value; 
             const note = document.getElementById('inp-note').value.trim();
+            
             if (!amt || !date) return alert('Vul een bedrag en datum in.');
-            
             amt = Math.abs(amt); 
-            let finalAmt;
             
-            // BEPAAL TEKEN VOOR BUDGET BEREKENING
-            if (type === 'income' || catId === 't_in') {
-                finalAmt = amt; // Inkomend op bank (budget omhoog)
-            } else {
-                finalAmt = -amt; // Uitgaand van bank (budget omlaag)
-            }
+            let finalAmt;
+            if (type === 'income' || catId === 't_in') { finalAmt = amt; } else { finalAmt = -amt; }
             
             if (catId === 't_in') { state.balances.save -= amt; state.balances.bank += amt; }
             else if (catId === 't_out') { state.balances.bank -= amt; state.balances.save += amt; }
@@ -319,8 +377,29 @@
             else { state.balances.bank += finalAmt; }
             
             state.transactions.push({ id: Date.now(), catId, type, amount: finalAmt, date, note: note || nameOverride });
-            document.getElementById('inp-amt').value = '';
+            
+            document.getElementById('inp-amt').value = ''; 
+            document.getElementById('inp-note').value = '';
+            document.getElementById('inp-date').valueAsDate = new Date(); // HIER SPRINGT HIJ NA INVOER WEER NAAR VANDAAG
+            
             checkWealthSnapshot(); saveState(); switchTab('dash');
+        }
+
+        function triggerSinkingFund() {
+            if(confirm(`€${state.sinkingFundMonthly} overzetten?`)) {
+                state.balances.bank -= state.sinkingFundMonthly; state.balances.save += state.sinkingFundMonthly;
+                state.transactions.push({ id: Date.now(), catId: 'transfer_sf', type: 'transfer', amount: -state.sinkingFundMonthly, date: new Date().toISOString().split('T')[0], note: 'Sinking Fund Buffer' });
+                saveState();
+            }
+        }
+
+        function reconcileBank() {
+            const realBank = parseFloat(document.getElementById('recon-bank').value); if (isNaN(realBank)) return alert('Vul in.');
+            const diff = realBank - state.balances.bank; if (Math.abs(diff) < 0.01) { alert('Perfect!'); document.getElementById('recon-bank').value = ''; return; }
+            if (confirm(`Verschil ontdekt van €${diff.toFixed(2)}. Correctie maken?`)) {
+                state.balances.bank = realBank; state.transactions.push({ id: Date.now(), catId: 'correction', type: 'correction', amount: diff, date: new Date().toISOString().split('T')[0], note: 'Bank Correctie' });
+                document.getElementById('recon-bank').value = ''; saveState();
+            }
         }
 
         function updateUI() {
@@ -334,48 +413,50 @@
             const varSpentInCycle = Math.abs(tInCycle.filter(t => t.type === 'var').reduce((s, t) => s + t.amount, 0));
             const totalFixedBudget = state.fixedCosts.reduce((s, c) => s + c.amount, 0);
             
-            // NIEUW: Bereken handmatige extra transfers (t_in en t_out) voor budget
             const manualTransfers = tInCycle.filter(t => t.catId === 't_in' || t.catId === 't_out').reduce((s, t) => s + t.amount, 0);
-
             const monthlyFree = incomeInCycle - totalFixedBudget - state.sinkingFundMonthly - varSpentInCycle + manualTransfers;
 
             const today = new Date(); const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-            let daysRemaining = (lastDayOfMonth.getDate() - today.getDate()) + 1;
-            let dailyBudget = monthlyFree / (daysRemaining || 1);
+            let daysRemaining = (lastDayOfMonth.getDate() - today.getDate()) + 1; if(daysRemaining < 1) daysRemaining = 1; 
+            let dailyBudget = monthlyFree / daysRemaining;
 
             document.getElementById('dash-bank').innerText = `€ ${state.balances.bank.toFixed(2)}`;
             document.getElementById('dash-save').innerText = `€ ${state.balances.save.toFixed(2)}`;
             document.getElementById('dash-monthly-free').innerText = `€ ${monthlyFree.toFixed(2)}`;
             document.getElementById('dash-daily').innerText = `€ ${dailyBudget > 0 ? Math.floor(dailyBudget) : 0}`;
+            document.getElementById('dash-sf-text').innerText = `Doel: €${state.sinkingFundMonthly} / mnd naar Spaar`;
 
             const w = state.wealth; const b = state.balances;
-            const liquid = b.bank + b.save + (w.invest||0) + (w.pension_m||0) + (w.group_m||0);
-            document.getElementById('dash-fire-amount').innerText = `€ ${liquid.toLocaleString('nl-BE')}`;
+            const liquid = b.bank + b.save + (w.invest||0) + (w.pension_m||0) + (w.pension_k||0) + (w.group_m||0) + (w.group_k||0);
+            document.getElementById('dash-fire-amount').innerText = `€ ${liquid.toLocaleString('nl-BE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
             document.getElementById('dash-fixed-checklist').innerHTML = state.fixedCosts.map(c => {
                 const isPaid = tInCycle.some(t => t.catId === c.id);
-                return `<div class="flex justify-between items-center p-2 rounded-lg ${isPaid ? 'opacity-40' : ''}"><div class="flex items-center gap-2"><span>${isPaid ? '✅' : c.icon}</span><span class="text-xs font-bold">${c.name}</span></div><span class="text-[10px] font-bold">€ ${c.amount}</span></div>`;
+                return `<div class="flex justify-between items-center p-2 rounded-lg ${isPaid ? 'opacity-40 bg-slate-50 dark:bg-slate-900' : 'bg-white dark:bg-slate-800'}"><div class="flex items-center gap-2"><span class="text-lg">${isPaid ? '✅' : c.icon}</span><span class="text-xs font-bold ${isPaid ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-200'}">${c.name}</span></div><span class="text-[10px] font-bold ${isPaid ? 'text-slate-400' : 'text-brand-purple dark:text-brand-yellow'}">€ ${c.amount}</span></div>`;
             }).join('');
 
             renderHistory(); renderGrids(); renderWealthUI();
         }
 
         function renderGrids() {
-            document.getElementById('grid-var').innerHTML = VAR_CATS.map(c => `<button onclick="addTransaction('${c.id}', 'var', '${c.name}')" class="bg-white dark:bg-slate-700 p-2 rounded-2xl flex flex-col items-center justify-center text-[9px] font-bold border dark:border-slate-600 shadow-sm"><span class="text-xl mb-1">${c.icon}</span>${c.name}</button>`).join('');
-            document.getElementById('grid-fixed').innerHTML = state.fixedCosts.map(c => `<button onclick="addTransaction('${c.id}', 'fixed', '${c.name}')" class="bg-slate-50 dark:bg-slate-800 p-2 rounded-2xl flex flex-col items-center justify-center text-[9px] font-bold text-slate-500 border dark:border-slate-600 shadow-sm"><span class="text-xl mb-1 opacity-70">${c.icon}</span>${c.name}</button>`).join('');
-            document.getElementById('grid-inc').innerHTML = INC_CATS.map(c => `<button onclick="addTransaction('${c.id}', 'income', '${c.name}')" class="bg-brand-light dark:bg-brand-yellow/20 p-2 rounded-2xl flex flex-col items-center justify-center text-[9px] font-bold text-brand-purple border dark:border-slate-600 shadow-sm"><span class="text-xl mb-1">${c.icon}</span>${c.name}</button>`).join('');
+            document.getElementById('grid-var').innerHTML = VAR_CATS.map(c => `<button onclick="addTransaction('${c.id}', 'var', '${c.name}')" class="bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 p-2 rounded-2xl flex flex-col items-center justify-center text-[9px] font-bold shadow-sm active:scale-95 text-center"><span class="text-xl mb-1">${c.icon}</span>${c.name}</button>`).join('');
+            document.getElementById('grid-fixed').innerHTML = state.fixedCosts.map(c => `<button onclick="addTransaction('${c.id}', 'fixed', '${c.name}')" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 p-2 rounded-2xl flex flex-col items-center justify-center text-[9px] font-bold text-slate-500 dark:text-slate-300 shadow-sm active:scale-95 text-center"><span class="text-xl mb-1 opacity-70">${c.icon}</span><span class="truncate w-full">${c.name}</span></button>`).join('');
+            document.getElementById('grid-inc').innerHTML = INC_CATS.map(c => `<button onclick="addTransaction('${c.id}', 'income', '${c.name}')" class="bg-brand-light dark:bg-brand-yellow/20 border border-brand-purple/20 p-2 rounded-2xl flex flex-col items-center justify-center text-[9px] font-bold text-brand-purple dark:text-brand-yellow shadow-sm active:scale-95 text-center"><span class="text-xl mb-1">${c.icon}</span>${c.name}</button>`).join('');
         }
 
         function renderHistory() {
             const list = [...state.transactions].sort((a,b) => new Date(b.date) - new Date(a.date) || b.id - a.id);
             document.getElementById('history-list').innerHTML = list.map(t => {
                 let color = 'text-slate-800 dark:text-white'; let prefix = t.amount > 0 ? '+' : '-';
-                if(t.type === 'income') color = 'text-green-600'; if(t.type === 'transfer') { color = 'text-blue-500'; prefix = t.amount > 0 ? '↔ +' : '↔ -'; }
-                return `<div class="bg-white dark:bg-slate-800 p-3 rounded-2xl flex justify-between items-center text-sm shadow-sm border dark:border-slate-700"><div><p class="font-bold">${t.note}</p><p class="text-[10px] text-slate-400">${t.date}</p></div><div class="text-right"><p class="font-bold ${color}">${prefix}€${Math.abs(t.amount).toFixed(2)}</p><button onclick="delTransaction(${t.id})" class="text-[9px] uppercase text-red-300">Wis</button></div></div>`;
+                if(t.type === 'income') color = 'text-green-600 dark:text-green-400'; 
+                if(t.type === 'correction') color = 'text-brand-yellow';
+                if(t.type === 'transfer') { color = 'text-blue-500'; prefix = t.amount > 0 ? '↔ +' : '↔ -'; }
+                return `<div class="bg-white dark:bg-slate-800 p-3 rounded-2xl flex justify-between items-center text-sm shadow-sm border border-slate-50 dark:border-slate-700"><div><p class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">${t.note}</p><p class="text-[10px] text-slate-400">${t.date} | ${t.type.toUpperCase()}</p></div><div class="text-right"><p class="font-bold ${color}">${prefix}€${Math.abs(t.amount).toFixed(2)}</p><button onclick="delTransaction(${t.id})" class="text-[9px] uppercase text-red-300 mt-1">Wis</button></div></div>`;
             }).join('') || '<p class="text-sm text-slate-400">Nog geen transacties.</p>';
         }
 
         function delTransaction(id) {
+            if(!confirm('Transactie wissen?')) return;
             const t = state.transactions.find(x => x.id === id);
             let absAmt = Math.abs(t.amount);
             if (t.catId === 't_in') { state.balances.save += absAmt; state.balances.bank -= absAmt; }
@@ -385,81 +466,36 @@
         }
 
         const renderLineChart = (data, colorClass, hexColor) => {
-            if(data.length === 0) return '<p class="text-[9px] text-slate-400">Geen data</p>';
-            const maxVal = Math.max(...data.map(d => d.val), 1) * 1.1;
-            const cWidth = Math.max(data.length * 50, 200);
-            let points = data.map((d, i) => `${(i/(data.length-1 || 1))*100},${100-((d.val/maxVal)*100)}`).join(' ');
-            let htmlPoints = data.map((d, i) => `<div class="absolute top-0 h-[calc(100%-20px)] w-8 -ml-4 group flex justify-center z-10" style="left: ${(i/(data.length-1 || 1))*100}%"><div class="absolute w-2 h-2 rounded-full ${colorClass} border border-white" style="bottom: ${(d.val/maxVal)*100}%; transform: translateY(50%)"></div><div class="absolute bottom-full mb-1 hidden group-hover:block bg-slate-800 text-white text-[9px] p-1 rounded z-20 whitespace-nowrap">€${Math.round(d.val)}</div><div class="absolute bottom-[-20px] text-[8px] text-slate-400">${d.label}</div></div>`).join('');
-            return `<div class="relative h-20 mt-2 pb-6" style="width: ${cWidth}px"><svg class="absolute top-0 left-0 w-full h-[calc(100%-20px)] overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100"><polyline points="${points}" fill="none" stroke="${hexColor}" stroke-width="2" /></svg>${htmlPoints}</div>`;
+            if(data.length === 0) return '<p class="text-[9px] text-slate-400">Nog geen data</p>';
+            const maxVal = Math.max(...data.map(d => d.val), 1) * 1.1; 
+            const cWidth = Math.max(data.length * 50, 200); 
+            let points = data.map((d, i) => { let x = data.length > 1 ? (i / (data.length - 1)) * 100 : 50; let y = 100 - ((d.val / maxVal) * 100); return `${x},${y}`; }).join(' ');
+            let htmlPoints = data.map((d, i) => { let x = data.length > 1 ? (i / (data.length - 1)) * 100 : 50; let y = (d.val / maxVal) * 100; return `<div class="absolute top-0 h-[calc(100%-20px)] w-8 -ml-4 group flex justify-center cursor-pointer z-10" style="left: ${x}%"><div class="absolute w-2 h-2 rounded-full ${colorClass} shadow-md transition-transform group-hover:scale-[2] border border-white dark:border-slate-800" style="bottom: ${y}%; transform: translateY(50%)"></div><div class="absolute bottom-full mb-1 hidden group-hover:block bg-slate-800 text-white text-[9px] p-1.5 rounded z-20 whitespace-nowrap text-center shadow-lg">€${Math.round(d.val).toLocaleString('nl-BE')}</div><div class="absolute bottom-[-20px] text-[8px] font-bold text-slate-400 whitespace-nowrap">${d.label}</div></div>`; }).join('');
+            return `<div class="relative h-20 mt-2 pb-6" style="width: ${cWidth}px"><svg class="absolute top-0 left-0 w-full h-[calc(100%-20px)] overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100"><polyline points="${points}" fill="none" stroke="${hexColor}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" /></svg>${htmlPoints}</div>`;
         };
+
+        function fillAnalysisSelectors() {
+            const mSel = document.getElementById('ana-month'); const ySel = document.getElementById('ana-year');
+            if (mSel.options.length === 0) {
+                const months = ["Jan", "Feb", "Mrt", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"]; const now = new Date();
+                mSel.innerHTML = months.map((m, i) => `<option value="${i}" ${i === now.getMonth() ? 'selected' : ''}>${m}</option>`).join('');
+                ySel.innerHTML = [now.getFullYear()-1, now.getFullYear(), now.getFullYear()+1].map(y => `<option value="${y}" ${y === now.getFullYear() ? 'selected' : ''}>${y}</option>`).join(''); renderAnalysis();
+            }
+        }
 
         function renderAnalysis() {
             const m = parseInt(document.getElementById('ana-month').value); const y = parseInt(document.getElementById('ana-year').value);
             const tMonthAll = state.transactions.filter(t => new Date(t.date).getMonth() === m && new Date(t.date).getFullYear() === y);
             const totalIn = tMonthAll.filter(t => t.type === 'income').reduce((s,t) => s + t.amount, 0);
+            const totalOutFixed = Math.abs(tMonthAll.filter(t => t.type === 'fixed').reduce((s,t) => s + t.amount, 0));
             const totalOutVar = Math.abs(tMonthAll.filter(t => t.type === 'var').reduce((s,t) => s + t.amount, 0));
-            
-            document.getElementById('ana-tot-in').innerText = `€ ${totalIn.toFixed(2)}`;
-            const breakdown = {}; VAR_CATS.forEach(c => breakdown[c.id] = { name: c.name, total: 0, icon: c.icon });
-            tMonthAll.filter(t => t.type === 'var').forEach(t => { if(breakdown[t.catId]) breakdown[t.catId].total += Math.abs(t.amount); });
-            document.getElementById('ana-breakdown').innerHTML = Object.values(breakdown).filter(c => c.total > 0).map(c => `<div class="bg-white dark:bg-slate-800 p-3 rounded-xl border dark:border-slate-700 shadow-sm"><div class="flex justify-between text-xs font-bold mb-1"><span>${c.icon} ${c.name}</span><span>€${c.total.toFixed(2)}</span></div><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2"><div class="bg-brand-purple h-2 rounded-full" style="width: ${(c.total/totalOutVar)*100}%"></div></div></div>`).join('');
+            const totalOut = totalOutFixed + totalOutVar; const surplus = totalIn - totalOut;
 
-            const monthsNames = ["Jan", "Feb", "Mrt", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
-            const wealthHistory = [...state.wealth.history].sort((a,b) => a.month.localeCompare(b.month));
-            document.getElementById('chart-wealth-total').innerHTML = renderLineChart(wealthHistory.map(h => ({ val: h.total, label: monthsNames[parseInt(h.month.split('-')[1])-1] })), 'bg-blue-500', '#3b82f6');
-            document.getElementById('chart-wealth-fire').innerHTML = renderLineChart(wealthHistory.map(h => ({ val: h.liquid, label: monthsNames[parseInt(h.month.split('-')[1])-1] })), 'bg-brand-yellow', '#facc15');
-            document.getElementById('chart-wealth-save').innerHTML = renderLineChart(wealthHistory.map(h => ({ val: h.save_balance || 0, label: monthsNames[parseInt(h.month.split('-')[1])-1] })), 'bg-brand-purple', '#6b21a8');
-        }
+            const activeSavings = Math.abs(tMonthAll.filter(t => t.catId === 'v7' || t.catId === 'transfer_sf' || t.catId === 't_out').reduce((s,t) => s + t.amount, 0));
+            const trueSavingsRate = totalIn > 0 ? Math.round((activeSavings / totalIn) * 100) : 0;
 
-        function checkWealthSnapshot() { const now = new Date(); const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; if(!state.wealth.history.some(h => h.month === monthKey)) takeSnapshot(monthKey); }
-        function takeSnapshot(monthKey) { 
-            const w = state.wealth; const b = state.balances; 
-            const liquid = b.bank + b.save + (w.invest||0) + (w.pension_m||0) + (w.group_m||0); 
-            state.wealth.history.push({ month: monthKey, total: liquid, liquid: liquid, save_balance: b.save }); saveState(); 
-        }
+            document.getElementById('ana-tot-in').innerText = `€ ${totalIn.toFixed(2)}`; document.getElementById('ana-tot-out').innerText = `€ ${totalOut.toFixed(2)}`;
+            document.getElementById('ana-surplus').innerText = `€ ${surplus.toFixed(2)}`; document.getElementById('ana-surplus').className = `text-lg font-bold ${surplus >= 0 ? 'text-green-500' : 'text-red-500'}`;
+            document.getElementById('ana-savings-rate').innerText = `${trueSavingsRate}%`;
 
-        function updateWealthData() {
-            state.wealth.invest = parseFloat(document.getElementById('w-invest').value) || 0;
-            state.wealth.pension_m = parseFloat(document.getElementById('w-pension-m').value) || 0;
-            state.wealth.group_m = parseFloat(document.getElementById('w-group-m').value) || 0;
-            const now = new Date(); const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            state.wealth.history = state.wealth.history.filter(h => h.month !== monthKey); takeSnapshot(monthKey);
-            alert("Opgeslagen!");
-        }
-
-        function triggerSinkingFund() {
-            state.balances.bank -= state.sinkingFundMonthly; state.balances.save += state.sinkingFundMonthly;
-            state.transactions.push({ id: Date.now(), catId: 'transfer_sf', type: 'transfer', amount: -state.sinkingFundMonthly, date: new Date().toISOString().split('T')[0], note: 'Sinking Fund Buffer' });
-            saveState();
-        }
-
-        function fillAnalysisSelectors() {
-            const now = new Date();
-            document.getElementById('ana-month').innerHTML = ["Jan", "Feb", "Mrt", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"].map((m, i) => `<option value="${i}" ${i === now.getMonth() ? 'selected' : ''}>${m}</option>`).join('');
-            document.getElementById('ana-year').innerHTML = [now.getFullYear()].map(y => `<option value="${y}" selected>${y}</option>`).join('');
-            renderAnalysis();
-        }
-        function fillWealthInputs() {
-            document.getElementById('w-invest').value = state.wealth.invest;
-            document.getElementById('w-pension-m').value = state.wealth.pension_m;
-            document.getElementById('w-group-m').value = state.wealth.group_m;
-        }
-        function fillSettings() {
-            document.getElementById('set-sf-amount').value = state.sinkingFundMonthly;
-            document.getElementById('set-bank').value = state.balances.bank;
-            document.getElementById('set-save').value = state.balances.save;
-            renderSettingsFixed();
-        }
-        function renderSettingsFixed() {
-            document.getElementById('settings-fc-list').innerHTML = state.fixedCosts.map(c => `<div class="flex gap-2 items-center mb-2"><input type="text" value="${c.name}" class="flex-1 p-2 rounded bg-slate-50 dark:bg-slate-700 text-xs"><input type="number" value="${c.amount}" class="w-16 p-2 rounded bg-slate-50 dark:bg-slate-700 text-xs"></div>`).join('');
-        }
-        function saveInitBalances() {
-            state.sinkingFundMonthly = parseFloat(document.getElementById('set-sf-amount').value);
-            state.balances.bank = parseFloat(document.getElementById('set-bank').value);
-            state.balances.save = parseFloat(document.getElementById('set-save').value);
-            saveState(); alert("Opgeslagen!");
-        }
-        function hardResetApp() { if(confirm("ALLES WISSEN?")) { state.transactions = []; state.balances = {bank:0,save:0}; state.wealth.history = []; saveState(); location.reload(); } }
-    </script>
-</body>
-</html>
+            const breakdown = {}; VAR_CATS.forEach(c
