@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GeldStroom V9.5 - Golden Edition</title>
+    <title>GeldStroom V9.6 - Veilig & Storingsvrij</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -35,7 +35,9 @@
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 pb-24 transition-colors duration-200">
 
     <div id="login-overlay" class="fixed inset-0 bg-brand-purple dark:bg-slate-900 z-[100] flex-col justify-center items-center p-6 text-white transition-opacity duration-300">
-        <div class="w-full max-w-sm bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-2xl text-slate-800 dark:text-white">
+        <div class="w-full max-w-sm bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-2xl text-slate-800 dark:text-white relative">
+            <div id="sys-error" class="hidden absolute -top-4 left-0 right-0 bg-red-600 text-white text-xs p-2 rounded-xl text-center font-bold shadow-lg"></div>
+            
             <h1 class="text-3xl font-black italic tracking-widest text-brand-purple dark:text-brand-yellow mb-2 text-center">GELDSTROOM</h1>
             <p class="text-xs text-center text-slate-400 mb-8 uppercase tracking-widest">Cloud Editie</p>
             <input type="email" id="login-email" placeholder="E-mailadres" class="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-xl mb-4 outline-none border border-slate-200 dark:border-slate-700">
@@ -60,7 +62,7 @@
             <header class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-black italic tracking-widest text-brand-purple dark:text-brand-yellow">GELDSTROOM</h1>
                 <div class="text-right">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Cyclus gestart (Loon M.)</p>
+                    <p class="text-[9px] uppercase font-bold text-slate-400">Cyclus gestart</p>
                     <p id="dash-cycle-date" class="text-xs font-bold text-brand-purple dark:text-brand-light">Geen loon</p>
                 </div>
             </header>
@@ -106,7 +108,7 @@
             </div>
 
             <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
-                <h3 class="font-bold text-[10px] text-slate-400 uppercase tracking-wider mb-4">Checklist Vaste Lasten (Huidige Cyclus)</h3>
+                <h3 class="font-bold text-[10px] text-slate-400 uppercase tracking-wider mb-4">Checklist Vaste Lasten (Cyclus)</h3>
                 <div id="dash-fixed-checklist" class="space-y-2"></div>
             </div>
         </section>
@@ -257,6 +259,15 @@
     </div>
 
     <script>
+        // --- 0. STORINGSMELDER (Voor Debugging) ---
+        window.onerror = function(message, source, lineno, colno, error) {
+            const errDiv = document.getElementById('sys-error');
+            if(errDiv) {
+                errDiv.innerText = "Systeemfout: " + message;
+                errDiv.classList.remove('hidden');
+            }
+        };
+
         // --- 1. FIREBASE SETUP ---
         const firebaseConfig = {
             apiKey: "AIzaSyBkazu-3wmAcjUkfIEtACJFhiuoKgmcxfk",
@@ -288,7 +299,11 @@
                 currentUserUid = user.uid;
                 document.getElementById('login-overlay').classList.add('hidden-login');
                 document.getElementById('main-app').classList.remove('hidden');
-                document.getElementById('inp-date').valueAsDate = new Date(); // HIER IS DE DATUM HERSTELD
+                
+                // Datum op vandaag zetten als element bestaat
+                const dateInp = document.getElementById('inp-date');
+                if(dateInp) dateInp.valueAsDate = new Date();
+                
                 startCloudSync();
             } else {
                 currentUserUid = null;
@@ -299,14 +314,33 @@
         });
 
         function login() {
-            const email = document.getElementById('login-email').value; const pass = document.getElementById('login-pass').value;
-            const errEl = document.getElementById('login-error'); const loadEl = document.getElementById('login-loading');
-            if (!email || !pass) return errEl.innerText = "Vul alles in.";
-            errEl.innerText = ""; loadEl.classList.remove('hidden'); document.getElementById('btn-login').disabled = true;
-            auth.signInWithEmailAndPassword(email, pass).catch(error => {
-                errEl.innerText = "Fout e-mailadres of wachtwoord."; loadEl.classList.add('hidden'); document.getElementById('btn-login').disabled = false;
-            });
+            try {
+                const email = document.getElementById('login-email').value; 
+                const pass = document.getElementById('login-pass').value;
+                const errEl = document.getElementById('login-error'); 
+                const loadEl = document.getElementById('login-loading');
+                
+                if (!email || !pass) {
+                    errEl.innerText = "Vul alles in.";
+                    return;
+                }
+                
+                errEl.innerText = ""; 
+                loadEl.classList.remove('hidden'); 
+                document.getElementById('btn-login').disabled = true;
+                
+                auth.signInWithEmailAndPassword(email, pass).catch(error => {
+                    errEl.innerText = "Foutcode: " + error.message; 
+                    loadEl.classList.add('hidden'); 
+                    document.getElementById('btn-login').disabled = false;
+                });
+            } catch(e) {
+                const errDiv = document.getElementById('sys-error');
+                errDiv.innerText = "Knop fout: " + e.message;
+                errDiv.classList.remove('hidden');
+            }
         }
+        
         function logout() { auth.signOut(); }
 
         // --- 4. CLOUD SYNC LOGICA ---
@@ -315,7 +349,6 @@
             unsubscribe = docRef.onSnapshot((doc) => {
                 if (doc.exists) {
                     state = doc.data();
-                    // Failsafe check
                     if(!state.balances) state.balances = { bank: 0, save: 0 };
                     if(!state.transactions) state.transactions = [];
                     if(!state.sinkingFundMonthly) state.sinkingFundMonthly = 100;
@@ -380,7 +413,7 @@
             
             document.getElementById('inp-amt').value = ''; 
             document.getElementById('inp-note').value = '';
-            document.getElementById('inp-date').valueAsDate = new Date(); // HIER SPRINGT HIJ NA INVOER WEER NAAR VANDAAG
+            document.getElementById('inp-date').valueAsDate = new Date();
             
             checkWealthSnapshot(); saveState(); switchTab('dash');
         }
@@ -498,4 +531,82 @@
             document.getElementById('ana-surplus').innerText = `€ ${surplus.toFixed(2)}`; document.getElementById('ana-surplus').className = `text-lg font-bold ${surplus >= 0 ? 'text-green-500' : 'text-red-500'}`;
             document.getElementById('ana-savings-rate').innerText = `${trueSavingsRate}%`;
 
-            const breakdown = {}; VAR_CATS.forEach(c
+            const breakdown = {}; VAR_CATS.forEach(c => breakdown[c.id] = { name: c.name, total: 0, icon: c.icon });
+            tMonthAll.filter(t => t.type === 'var').forEach(t => { if(breakdown[t.catId]) breakdown[t.catId].total += Math.abs(t.amount); });
+            document.getElementById('ana-breakdown').innerHTML = Object.values(breakdown).filter(c => c.total > 0).sort((a,b) => b.total - a.total).map(c => {
+                const pct = totalOutVar > 0 ? Math.round((c.total / totalOutVar) * 100) : 0;
+                return `<div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-50 dark:border-slate-700 shadow-sm"><div class="flex justify-between text-xs font-bold mb-1 dark:text-slate-200"><span>${c.icon} ${c.name}</span><span>€${c.total.toFixed(2)}</span></div><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2"><div class="bg-brand-purple dark:bg-brand-yellow h-2 rounded-full" style="width: ${pct}%"></div></div></div>`;
+            }).join('') || '<p class="text-sm text-slate-400">Geen variabele data.</p>';
+
+            const monthsNames = ["Jan", "Feb", "Mrt", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"]; 
+            document.getElementById('ana-trend-year').innerText = y; const chartContainer = document.getElementById('ana-trend-chart'); chartContainer.innerHTML = '';
+            let maxAmt = 1; const yearlyData = [];
+            for(let i=0; i<12; i++) {
+                const tm = state.transactions.filter(t => new Date(t.date).getMonth() === i && new Date(t.date).getFullYear() === y);
+                const mIn = tm.filter(t => t.type === 'income').reduce((s,t) => s + t.amount, 0); const mOut = Math.abs(tm.filter(t => t.type === 'var' || t.type === 'fixed').reduce((s,t) => s + t.amount, 0));
+                if(mIn > maxAmt) maxAmt = mIn; if(mOut > maxAmt) maxAmt = mOut; yearlyData.push({ mIn, mOut });
+            }
+            yearlyData.forEach((d, index) => {
+                chartContainer.innerHTML += `<div class="flex flex-col items-center justify-end h-full gap-1 w-8 flex-shrink-0"><div class="flex items-end gap-[2px] w-full h-full relative group"><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-800 text-white text-[8px] p-1 rounded z-10 whitespace-nowrap">In: €${Math.round(d.mIn)}<br>Uit: €${Math.round(d.mOut)}</div><div class="w-1/2 bg-green-400 rounded-t-sm" style="height: ${(d.mIn / maxAmt) * 100}%"></div><div class="w-1/2 bg-brand-purple dark:bg-brand-yellow rounded-t-sm" style="height: ${(d.mOut / maxAmt) * 100}%"></div></div><span class="text-[8px] font-bold text-slate-400">${monthsNames[index].substring(0,1)}</span></div>`;
+            });
+
+            const wealthHistory = [...state.wealth.history].sort((a,b) => a.month.localeCompare(b.month));
+            const formatMonth = (ym) => { const parts = ym.split('-'); if(parts.length < 2) return ym; return monthsNames[parseInt(parts[1], 10) - 1]; };
+            
+            document.getElementById('chart-wealth-total').innerHTML = renderLineChart(wealthHistory.map(h => ({ val: h.total, label: formatMonth(h.month) })), 'bg-blue-500', '#3b82f6');
+            document.getElementById('chart-wealth-fire').innerHTML = renderLineChart(wealthHistory.map(h => ({ val: h.liquid, label: formatMonth(h.month) })), 'bg-brand-yellow', '#facc15');
+            document.getElementById('chart-wealth-save').innerHTML = renderLineChart(wealthHistory.map(h => ({ val: h.save_balance || 0, label: formatMonth(h.month) })), 'bg-brand-purple', '#6b21a8');
+        }
+
+        function renderWealthUI() {
+            const w = state.wealth; const b = state.balances;
+            const liquid = b.bank + b.save + (w.invest||0) + (w.pension_m||0) + (w.pension_k||0) + (w.group_m||0) + (w.group_k||0);
+            const totalNW = liquid + (w.mor_val||0) + (w.sig_val||0) - (w.mor_debt||0) - (w.sig_debt||0);
+
+            document.getElementById('nw-total').innerText = `€ ${totalNW.toLocaleString('nl-BE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`; document.getElementById('nw-liquid').innerText = `€ ${liquid.toLocaleString('nl-BE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            const fireGoal = 1000000; let firePct = (liquid / fireGoal) * 100; if(firePct > 100) firePct = 100;
+            document.getElementById('goal-fire-pct').innerText = `${firePct.toFixed(1)}%`; document.getElementById('goal-fire-bar').style.width = `${firePct}%`;
+
+            const morStart = w.mor_start > 0 ? w.mor_start : 1; const morPaid = morStart - (w.mor_debt||0); let morPct = (morPaid / morStart) * 100; if(morPct < 0) morPct = 0; if(morPct > 100) morPct = 100;
+            document.getElementById('goal-mor-pct').innerText = `${morPct.toFixed(1)}%`; document.getElementById('goal-mor-bar').style.width = `${morPct}%`; document.getElementById('goal-mor-text').innerText = `Nog € ${(w.mor_debt||0).toLocaleString('nl-BE')} te gaan`;
+
+            const sigStart = w.sig_start > 0 ? w.sig_start : 1; const sigPaid = sigStart - (w.sig_debt||0); let sigPct = (sigPaid / sigStart) * 100; if(sigPct < 0) sigPct = 0; if(sigPct > 100) sigPct = 100;
+            document.getElementById('goal-sig-pct').innerText = `${sigPct.toFixed(1)}%`; document.getElementById('goal-sig-bar').style.width = `${sigPct}%`; document.getElementById('goal-sig-text').innerText = `Nog € ${(w.sig_debt||0).toLocaleString('nl-BE')} te gaan`;
+        }
+
+        function fillWealthInputs() {
+            const w = state.wealth;
+            document.getElementById('w-invest').value = w.invest || 0; document.getElementById('w-pension-m').value = w.pension_m || 0; document.getElementById('w-pension-k').value = w.pension_k || 0; document.getElementById('w-group-m').value = w.group_m || 0; document.getElementById('w-group-k').value = w.group_k || 0;
+            document.getElementById('w-mor-val').value = w.mor_val || 0; document.getElementById('w-mor-debt').value = w.mor_debt || 0; document.getElementById('w-sig-val').value = w.sig_val || 0; document.getElementById('w-sig-debt').value = w.sig_debt || 0;
+        }
+
+        function updateWealthData() {
+            const w = state.wealth;
+            w.invest = parseFloat(document.getElementById('w-invest').value) || 0; w.pension_m = parseFloat(document.getElementById('w-pension-m').value) || 0; w.pension_k = parseFloat(document.getElementById('w-pension-k').value) || 0; w.group_m = parseFloat(document.getElementById('w-group-m').value) || 0; w.group_k = parseFloat(document.getElementById('w-group-k').value) || 0;
+            w.mor_val = parseFloat(document.getElementById('w-mor-val').value) || 0; w.mor_debt = parseFloat(document.getElementById('w-mor-debt').value) || 0; w.sig_val = parseFloat(document.getElementById('w-sig-val').value) || 0; w.sig_debt = parseFloat(document.getElementById('w-sig-debt').value) || 0;
+            
+            const now = new Date(); const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            state.wealth.history = state.wealth.history.filter(h => h.month !== monthKey); 
+            
+            takeSnapshot(monthKey); 
+            alert('Waardes opgeslagen en toegevoegd aan je historiek!');
+        }
+
+        function checkWealthSnapshot() { const now = new Date(); const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; if(!state.wealth.history.some(h => h.month === monthKey)) { takeSnapshot(monthKey); } }
+        function forceWealthSnapshot() { const now = new Date(); const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; state.wealth.history = state.wealth.history.filter(h => h.month !== monthKey); takeSnapshot(monthKey); }
+        function takeSnapshot(monthKey) { const w = state.wealth; const b = state.balances; const liquid = b.bank + b.save + (w.invest||0) + (w.pension_m||0) + (w.pension_k||0) + (w.group_m||0) + (w.group_k||0); const totalNW = liquid + (w.mor_val||0) + (w.sig_val||0) - (w.mor_debt||0) - (w.sig_debt||0); state.wealth.history.push({ month: monthKey, total: totalNW, liquid: liquid, save_balance: b.save }); saveState(); }
+
+        // --- 9. INSTELLINGEN BEHEER ---
+        function renderSettingsFixed() { document.getElementById('settings-fc-list').innerHTML = state.fixedCosts.map(c => `<div class="flex gap-2 items-center bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border border-slate-100 dark:border-slate-700"><input type="text" value="${c.icon}" onchange="updateFC('${c.id}', 'icon', this.value)" class="w-8 text-center bg-transparent border-b outline-none"><input type="text" value="${c.name}" onchange="updateFC('${c.id}', 'name', this.value)" class="flex-1 text-sm font-bold bg-transparent border-b outline-none text-slate-800 dark:text-white"><span class="text-xs text-slate-400">€</span><input type="number" value="${c.amount}" onchange="updateFC('${c.id}', 'amount', this.value)" class="w-16 text-right text-sm font-bold text-brand-purple dark:text-brand-yellow bg-transparent border-b outline-none"><button onclick="deleteFC('${c.id}')" class="text-red-400 font-black ml-1 p-1">✕</button></div>`).join(''); }
+        function saveWealthStarts() { state.wealth.mor_start = parseFloat(document.getElementById('set-mor-start').value) || 0; state.wealth.sig_start = parseFloat(document.getElementById('set-sig-start').value) || 0; saveState(); alert('Startbedragen Hypotheken Opgeslagen!'); }
+        function updateFC(id, field, value) { const fc = state.fixedCosts.find(c => c.id === id); if (field === 'amount') fc[field] = parseFloat(value) || 0; else fc[field] = value; saveState(); renderSettingsFixed(); }
+        function addFC() { state.fixedCosts.push({ id: 'f' + Date.now(), name: 'Nieuw', amount: 0, icon: '🏷️' }); saveState(); renderSettingsFixed(); }
+        function deleteFC(id) { if(confirm('Definitief verwijderen?')) { state.fixedCosts = state.fixedCosts.filter(c => c.id !== id); saveState(); renderSettingsFixed(); } }
+        function saveInitBalances() { state.sinkingFundMonthly = parseFloat(document.getElementById('set-sf-amount').value) || 0; state.balances.bank = parseFloat(document.getElementById('set-bank').value) || 0; state.balances.save = parseFloat(document.getElementById('set-save').value) || 0; saveState(); alert('Instellingen opgeslagen!'); }
+        function exportJSON() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(state)], {type: 'application/json'})); a.download = `GeldStroom_Backup_${new Date().toISOString().split('T')[0]}.json`; a.click(); }
+        function importJSON(e) { const reader = new FileReader(); reader.onload = (ev) => { state = JSON.parse(ev.target.result); saveState(); alert('Oude data is succesvol in de cloud gezet!'); location.reload(); }; reader.readAsText(e.target.files[0]); }
+        function hardResetApp() { if(confirm('🚨 ALLES WISSEN? Dit verwijdert je data OOK in de cloud voor iedereen!')) { state = { balances: {bank:0,save:0}, transactions:[], sinkingFundMonthly:100, fixedCosts:DEFAULT_FIXED, wealth:{invest:0,pension_m:0,pension_k:0,group_m:0,group_k:0,mor_start:200000,mor_val:0,mor_debt:0,sig_start:200000,sig_val:0,sig_debt:0,history:[]} }; saveState(); alert('Kluis is leeggehaald!'); location.reload(); } }
+
+    </script>
+</body>
+</html>
