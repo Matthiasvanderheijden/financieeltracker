@@ -78,11 +78,7 @@
                 </div>
             </div>
 
-            <div id="mortgage-alert" class="hidden bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 p-3 rounded-2xl mb-4 text-[10px] font-bold border border-blue-200 dark:border-blue-800 text-center">
-                🚀 Auto-aflossing Sigarenstraat (€578,36) verwerkt voor deze maand!
-            </div>
-
-            <div class="bg-slate-800 p-4 rounded-2xl shadow-sm mb-4 flex justify-between items-center text-white border border-slate-700">
+                       <div class="bg-slate-800 p-4 rounded-2xl shadow-sm mb-4 flex justify-between items-center text-white border border-slate-700">
                 <div>
                     <p class="text-xs font-bold text-brand-yellow">🔥 FIRE Vermogen</p>
                     <p class="text-[9px] text-slate-400 uppercase tracking-widest">Op weg naar 1 Miljoen</p>
@@ -303,35 +299,7 @@
         let currentUserUid = null;
         let unsubscribe = null;
 
-        // --- 3. AUTO-AFLOSSING LOGICA ---
-        function checkAutomatedMortgage() {
-            const now = new Date();
-            const day = now.getDate();
-            const monthKey = `${now.getFullYear()}-${now.getMonth() + 1}`;
-            let updated = false;
-
-            if (day >= 15 && state.wealth.lastSigUpdate !== monthKey) {
-                const aflossing = 578.36;
-                state.wealth.sig_debt -= aflossing;
-                state.wealth.lastSigUpdate = monthKey;
-                
-                state.transactions.push({
-                    id: Date.now(),
-                    catId: 'mortgage_auto',
-                    type: 'system',
-                    amount: 0,
-                    date: now.toISOString().split('T')[0],
-                    note: `Auto-aflossing Sigarenstraat (-€${aflossing})`
-                });
-                
-                updated = true;
-                const alertBox = document.getElementById('mortgage-alert');
-                if(alertBox) alertBox.classList.remove('hidden');
-            }
-
-            if (updated) saveState();
-        }
-
+       
         // --- 4. AUTHENTICATIE LOGICA ---
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -387,7 +355,6 @@
                     document.getElementById('cloud-status').innerText = "🟢 Live";
                     
                     // Voer de hypotheek-check uit zodra we cloud-data hebben
-                    checkAutomatedMortgage();
                     updateUI(); 
                 } else {
                     let localData = localStorage.getItem('gs_v8_data');
