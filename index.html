@@ -634,7 +634,10 @@
             const tInCycle       = state.transactions.filter(t => new Date(t.date) >= cycleStart);
             const incomeInCycle  = tInCycle.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
             const varSpentInCycle = Math.abs(tInCycle.filter(t => t.type === 'var').reduce((s, t) => s + t.amount, 0));
-            const totalFixedBudget = state.fixedCosts.reduce((s, c) => s + c.amount, 0);
+            const totalFixedBudget = state.fixedCosts
+            .filter(c => !tInCycle.some(t => t.catId === c.id) 
+             && !state.manuallyPaidFixed.includes(c.id))
+            .reduce((s, c) => s + c.amount, 0);
             const manualTransfers  = tInCycle.filter(t => t.catId === 't_in' || t.catId === 't_out').reduce((s, t) => s + t.amount, 0);
             const monthlyFree = incomeInCycle - totalFixedBudget - state.sinkingFundMonthly - varSpentInCycle + manualTransfers;
  
